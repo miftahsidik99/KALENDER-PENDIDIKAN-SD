@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SchoolForm } from './components/SchoolForm';
 import { HolidayManager } from './components/HolidayManager';
 import { CalendarView } from './components/CalendarView';
@@ -9,12 +9,25 @@ import { Home } from './components/Home';
 import { TeacherCalendarApp } from './components/TeacherCalendarApp';
 import { AuthButton } from './components/AuthButton';
 import { useSchoolCalendarData } from './lib/useCalendarData';
+import { LoginPage } from './components/LoginPage';
+import { auth } from './firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [currentView, setCurrentView] = useState<string>('home');
   const [startYear, setStartYear] = useState<number>(new Date().getFullYear());
   const [paperSize, setPaperSize] = useState<'A4' | 'F4'>('A4');
   const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setIsAuthChecking(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const { 
     schoolDays, setSchoolDays, 
@@ -34,6 +47,18 @@ export default function App() {
       setIsExporting(false);
     }
   };
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage />;
+  }
 
   if (currentView === 'home') {
     return <Home onStart={(view) => setCurrentView(view)} />;
