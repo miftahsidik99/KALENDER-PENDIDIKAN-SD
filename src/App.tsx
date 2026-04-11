@@ -1,34 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { SchoolIdentity, Holiday } from './types';
-import { getDefaultHolidays } from './lib/defaultData';
+import React, { useState } from 'react';
 import { SchoolForm } from './components/SchoolForm';
 import { HolidayManager } from './components/HolidayManager';
 import { CalendarView } from './components/CalendarView';
 import { exportToWord } from './lib/exportWord';
-import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft } from 'lucide-react';
+import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Save } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Home } from './components/Home';
 import { TeacherCalendarApp } from './components/TeacherCalendarApp';
+import { AuthButton } from './components/AuthButton';
+import { useSchoolCalendarData } from './lib/useCalendarData';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<string>('home');
   const [startYear, setStartYear] = useState<number>(new Date().getFullYear());
-  const [schoolDays, setSchoolDays] = useState<5 | 6>(6);
-  const [identity, setIdentity] = useState<SchoolIdentity>({
-    name: 'SMAN 1 Contoh',
-    npsn: '20212345',
-    address: 'Jl. Pendidikan No. 1',
-    principalName: 'Dr. H. Guru Teladan, M.Pd.',
-    principalNip: '19700101 199512 1 001',
-    city: 'Kota Bandung'
-  });
-  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [paperSize, setPaperSize] = useState<'A4' | 'F4'>('A4');
   const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => {
-    setHolidays(getDefaultHolidays(startYear));
-  }, [startYear]);
+  const { 
+    schoolDays, setSchoolDays, 
+    identity, setIdentity, 
+    holidays, setHolidays, 
+    saveSchoolData, isSaving 
+  } = useSchoolCalendarData(startYear);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -79,6 +72,7 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            <AuthButton />
             <div className="flex items-center gap-1 sm:gap-2 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setPaperSize('A4')}
@@ -99,6 +93,13 @@ export default function App() {
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70"
             >
               {isExporting ? <span className="animate-pulse">Mengekspor...</span> : <><Download size={18} /> <span className="hidden sm:inline">Unduh Word</span></>}
+            </button>
+            <button
+              onClick={saveSchoolData}
+              disabled={isSaving}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70"
+            >
+              {isSaving ? <span className="animate-pulse">Menyimpan...</span> : <><Save size={18} /> <span className="hidden sm:inline">Simpan</span></>}
             </button>
           </div>
         </div>
@@ -168,7 +169,7 @@ export default function App() {
                 <p className="text-gray-600 mt-1">{identity.address}, {identity.city}</p>
               </div>
 
-              <CalendarView startYear={startYear} holidays={holidays} schoolDays={schoolDays} />
+              <CalendarView startYear={startYear} holidays={holidays} schoolDays={schoolDays} onChangeHolidays={setHolidays} />
 
               {/* Legend / Keterangan */}
               <div className="mt-12 border-t border-gray-100 pt-8">

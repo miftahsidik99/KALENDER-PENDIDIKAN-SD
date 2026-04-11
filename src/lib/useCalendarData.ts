@@ -1,0 +1,176 @@
+import { useState, useEffect } from 'react';
+import { db, auth } from '../firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { SchoolIdentity, TeacherIdentity, Holiday, ScheduleItem, CurriculumSubject } from '../types';
+import { getDefaultHolidays, defaultCurriculum, defaultScheduleItems } from './defaultData';
+
+export function useSchoolCalendarData(startYear: number) {
+  const [schoolDays, setSchoolDays] = useState<5 | 6>(6);
+  const [identity, setIdentity] = useState<SchoolIdentity>({
+    name: 'SMAN 1 Contoh',
+    npsn: '20212345',
+    address: 'Jl. Pendidikan No. 1',
+    principalName: 'Dr. H. Guru Teladan, M.Pd.',
+    principalNip: '19700101 199512 1 001',
+    city: 'Kota Bandung'
+  });
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!auth.currentUser) {
+      setHolidays(getDefaultHolidays(startYear));
+      setIsLoading(false);
+      return;
+    }
+
+    const docRef = doc(db, `users/${auth.currentUser.uid}/schoolSettings/${startYear}`);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSchoolDays(data.schoolDays);
+        setIdentity(data.identity);
+        setHolidays(data.holidays);
+      } else {
+        setHolidays(getDefaultHolidays(startYear));
+      }
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching school data:", error);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [startYear, auth.currentUser]);
+
+  const saveSchoolData = async () => {
+    if (!auth.currentUser) {
+      alert("Silakan masuk (login) terlebih dahulu untuk menyimpan pengaturan.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const docRef = doc(db, `users/${auth.currentUser.uid}/schoolSettings/${startYear}`);
+      await setDoc(docRef, {
+        uid: auth.currentUser.uid,
+        startYear,
+        schoolDays,
+        identity,
+        holidays,
+        updatedAt: new Date().toISOString()
+      });
+      alert("Pengaturan kalender sekolah berhasil disimpan!");
+    } catch (error) {
+      console.error("Error saving school data:", error);
+      alert("Gagal menyimpan pengaturan.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return { schoolDays, setSchoolDays, identity, setIdentity, holidays, setHolidays, saveSchoolData, isSaving, isLoading };
+}
+
+export function useClassCalendarData(startYear: number, grade: number) {
+  const [schoolDays, setSchoolDays] = useState<5 | 6>(6);
+  const [identity, setIdentity] = useState<TeacherIdentity>({
+    name: 'Nama Guru, S.Pd.',
+    nip: '19800101 200501 1 002',
+    schoolName: 'SMAN 1 Contoh',
+    principalName: 'Dr. H. Guru Teladan, M.Pd.',
+    principalNip: '19700101 199512 1 001',
+    city: 'Kota Bandung'
+  });
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>(defaultScheduleItems);
+  const [curriculum, setCurriculum] = useState<CurriculumSubject[]>(defaultCurriculum);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!auth.currentUser) {
+        setHolidays(getDefaultHolidays(startYear));
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const classDocRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${grade}`);
+        const classDocSnap = await getDoc(classDocRef);
+
+        if (classDocSnap.exists()) {
+          const data = classDocSnap.data();
+          setSchoolDays(data.schoolDays);
+          setIdentity(data.identity);
+          setHolidays(data.holidays);
+          setSchedule(data.schedule);
+          setCurriculum(data.curriculum);
+        } else {
+          // If no class data, inherit from school data
+          const schoolDocRef = doc(db, `users/${auth.currentUser.uid}/schoolSettings/${startYear}`);
+          const schoolDocSnap = await getDoc(schoolDocRef);
+          
+          if (schoolDocSnap.exists()) {
+            const schoolData = schoolDocSnap.data();
+            setSchoolDays(schoolData.schoolDays);
+            setHolidays(schoolData.holidays);
+            setIdentity(prev => ({
+              ...prev,
+              schoolName: schoolData.identity.name,
+              principalName: schoolData.identity.principalName,
+              principalNip: schoolData.identity.principalNip,
+              city: schoolData.identity.city
+            }));
+          } else {
+            setHolidays(getDefaultHolidays(startYear));
+          }
+        }
+      } catch (error) {
+        console.error("Error loading class data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [startYear, grade, auth.currentUser]);
+
+  const saveClassData = async () => {
+    if (!auth.currentUser) {
+      alert("Silakan masuk (login) terlebih dahulu untuk menyimpan pengaturan.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const docRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${grade}`);
+      await setDoc(docRef, {
+        uid: auth.currentUser.uid,
+        startYear,
+        grade,
+        schoolDays,
+        identity,
+        holidays,
+        schedule,
+        curriculum,
+        updatedAt: new Date().toISOString()
+      });
+      alert(`Pengaturan kalender kelas ${grade} berhasil disimpan!`);
+    } catch (error) {
+      console.error("Error saving class data:", error);
+      alert("Gagal menyimpan pengaturan.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return { 
+    schoolDays, setSchoolDays, 
+    identity, setIdentity, 
+    holidays, setHolidays, 
+    schedule, setSchedule, 
+    curriculum, setCurriculum, 
+    saveClassData, isSaving, isLoading 
+  };
+}

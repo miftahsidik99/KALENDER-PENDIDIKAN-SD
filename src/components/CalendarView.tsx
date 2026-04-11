@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Holiday } from '../types';
 import { 
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
@@ -7,14 +7,19 @@ import {
 import { id } from 'date-fns/locale';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
+import { DayEditModal } from './DayEditModal';
 
 interface CalendarViewProps {
   startYear: number;
   holidays: Holiday[];
   schoolDays?: 5 | 6;
+  onChangeHolidays?: (holidays: Holiday[]) => void;
 }
 
-export function CalendarView({ startYear, holidays, schoolDays = 6 }: CalendarViewProps) {
+export function CalendarView({ startYear, holidays, schoolDays = 6, onChangeHolidays }: CalendarViewProps) {
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [holidayToEdit, setHolidayToEdit] = useState<Holiday | undefined>(undefined);
   // Semester 1: July - Dec (startYear)
   // Semester 2: Jan - Jun (startYear + 1)
   const months = [
@@ -31,6 +36,32 @@ export function CalendarView({ startYear, holidays, schoolDays = 6 }: CalendarVi
       }
       return isSameDay(date, start);
     });
+  };
+
+  const handleDayClick = (date: Date, holiday?: Holiday) => {
+    if (!onChangeHolidays) return; // Only allow editing if the callback is provided
+    setSelectedDate(date);
+    setHolidayToEdit(holiday);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveHoliday = (savedHoliday: Holiday) => {
+    if (!onChangeHolidays) return;
+    
+    // If it's an existing holiday, update it. Otherwise, add it.
+    const existingIndex = holidays.findIndex(h => h.id === savedHoliday.id);
+    if (existingIndex >= 0) {
+      const newHolidays = [...holidays];
+      newHolidays[existingIndex] = savedHoliday;
+      onChangeHolidays(newHolidays);
+    } else {
+      onChangeHolidays([...holidays, savedHoliday]);
+    }
+  };
+
+  const handleDeleteHoliday = (holidayId: string) => {
+    if (!onChangeHolidays) return;
+    onChangeHolidays(holidays.filter(h => h.id !== holidayId));
   };
 
   const renderMonth = (monthDate: Date) => {
@@ -74,14 +105,16 @@ export function CalendarView({ startYear, holidays, schoolDays = 6 }: CalendarVi
             return (
               <div 
                 key={i} 
+                onClick={() => isCurrentMonth && handleDayClick(currentDay, holiday)}
                 className={cn(
-                  "py-2 border-b border-r border-gray-50 relative min-h-[40px] flex items-center justify-center",
+                  "py-2 border-b border-r border-gray-50 relative min-h-[40px] flex items-center justify-center transition-colors",
                   !isCurrentMonth && "text-gray-300 bg-gray-50/50",
                   isCurrentMonth && isNonEffective && !holiday && "text-red-500",
-                  isCurrentMonth && !isNonEffective && !holiday && "text-gray-700"
+                  isCurrentMonth && !isNonEffective && !holiday && "text-gray-700",
+                  isCurrentMonth && !!onChangeHolidays && "cursor-pointer hover:bg-gray-100"
                 )}
                 style={isCurrentMonth && holiday ? { backgroundColor: holiday.color, color: '#fff', fontWeight: 'bold' } : {}}
-                title={holiday?.description}
+                title={holiday?.description || (isCurrentMonth && !!onChangeHolidays ? "Klik untuk edit" : undefined)}
               >
                 {format(currentDay, dateFormat)}
               </div>
@@ -119,6 +152,15 @@ export function CalendarView({ startYear, holidays, schoolDays = 6 }: CalendarVi
           ))}
         </div>
       </div>
+
+      <DayEditModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedDate={selectedDate}
+        existingHoliday={holidayToEdit}
+        onSave={handleSaveHoliday}
+        onDelete={handleDeleteHoliday}
+      />
     </div>
   );
 }

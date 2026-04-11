@@ -9,46 +9,29 @@ import { ScheduleTable } from './ScheduleTable';
 import { CurriculumStructure } from './CurriculumStructure';
 import { TimeAllocation } from './TimeAllocation';
 import { exportTeacherWord } from '../lib/exportTeacherWord';
-import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Printer } from 'lucide-react';
+import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Save } from 'lucide-react';
 import { motion } from 'motion/react';
+import { AuthButton } from './AuthButton';
+import { useClassCalendarData } from '../lib/useCalendarData';
 
 interface TeacherCalendarAppProps {
   grade: number;
   onBack: () => void;
 }
 
-const defaultScheduleItems: ScheduleItem[] = [
-  { id: '1', time: '07:00 - 07:35', monday: 'Upacara', tuesday: 'Pendidikan Pancasila', wednesday: 'Bahasa Indonesia', thursday: 'Matematika', friday: 'Senam', saturday: 'Pramuka' },
-  { id: '2', time: '07:35 - 08:10', monday: 'PAIBP', tuesday: 'Pendidikan Pancasila', wednesday: 'Bahasa Indonesia', thursday: 'Matematika', friday: 'PAIBP', saturday: 'Ekskul' },
-  { id: '3', time: '08:10 - 08:45', monday: 'PAIBP', tuesday: 'Bahasa Indonesia', wednesday: 'Bahasa Indonesia', thursday: 'Matematika', friday: 'PAIBP', saturday: 'Ekskul' },
-  { id: 'break1', time: '08:45 - 09:00', monday: 'ISTIRAHAT', tuesday: 'ISTIRAHAT', wednesday: 'ISTIRAHAT', thursday: 'ISTIRAHAT', friday: 'ISTIRAHAT', saturday: 'ISTIRAHAT' },
-  { id: '4', time: '09:00 - 09:35', monday: 'Bahasa Indonesia', tuesday: 'PJOK', wednesday: 'Seni Budaya', thursday: 'Matematika', friday: 'Mulok/ Bahasa Sunda', saturday: '-' },
-  { id: '5', time: '09:35 - 10:10', monday: 'Bahasa Indonesia', tuesday: 'PJOK', wednesday: 'Seni Budaya', thursday: 'Pendidikan Pancasila', friday: 'Mulok/ Bahasa Sunda', saturday: '-' },
-  { id: '6', time: '10:10 - 10:45', monday: 'Bahasa Indonesia', tuesday: 'PJOK', wednesday: 'Seni Budaya', thursday: 'Pendidikan Pancasila', friday: '-', saturday: '-' },
-  { id: '7', time: '10:45 - 11:20', monday: '-', tuesday: '-', wednesday: '-', thursday: '-', friday: '-', saturday: '-' },
-];
-
 export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
   const [startYear, setStartYear] = useState<number>(new Date().getFullYear());
-  const [schoolDays, setSchoolDays] = useState<5 | 6>(6);
-  const [identity, setIdentity] = useState<TeacherIdentity>({
-    name: 'Nama Guru, S.Pd.',
-    nip: '19800101 200501 2 001',
-    schoolName: 'SDN 1 Contoh',
-    className: `Kelas ${grade}`,
-    city: 'Kota Bandung',
-    principalName: 'Kepala Sekolah, M.Pd.',
-    principalNip: '19700101 199512 1 001'
-  });
-  const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [schedule, setSchedule] = useState<ScheduleItem[]>(defaultScheduleItems);
-  const [curriculum, setCurriculum] = useState<CurriculumSubject[]>(defaultCurriculum);
   const [paperSize, setPaperSize] = useState<'A4' | 'F4'>('A4');
   const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => {
-    setHolidays(getDefaultHolidays(startYear));
-  }, [startYear]);
+  const {
+    schoolDays, setSchoolDays,
+    identity, setIdentity,
+    holidays, setHolidays,
+    schedule, setSchedule,
+    curriculum, setCurriculum,
+    saveClassData, isSaving, isLoading
+  } = useClassCalendarData(startYear, grade);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -90,6 +73,7 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            <AuthButton />
             <div className="flex items-center gap-1 sm:gap-2 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setPaperSize('A4')}
@@ -110,6 +94,13 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70"
             >
               {isExporting ? <span className="animate-pulse">Mengekspor...</span> : <><Download size={18} /> <span className="hidden sm:inline">Unduh Word</span></>}
+            </button>
+            <button
+              onClick={saveClassData}
+              disabled={isSaving}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70"
+            >
+              {isSaving ? <span className="animate-pulse">Menyimpan...</span> : <><Save size={18} /> <span className="hidden sm:inline">Simpan</span></>}
             </button>
           </div>
         </div>
@@ -188,7 +179,7 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
                 <p className="text-gray-600 font-medium mt-1">Guru Kelas: {identity.name}</p>
               </div>
 
-              <CalendarView startYear={startYear} holidays={holidays} schoolDays={schoolDays} />
+              <CalendarView startYear={startYear} holidays={holidays} schoolDays={schoolDays} onChangeHolidays={setHolidays} />
 
               {/* Legend / Keterangan */}
               <div className="mt-12 border-t border-gray-100 pt-8 print:break-inside-avoid">

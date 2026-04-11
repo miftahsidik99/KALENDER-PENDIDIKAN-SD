@@ -1,0 +1,127 @@
+{
+  "entities": {
+    "Holiday": {
+      "title": "Holiday",
+      "description": "A holiday or non-effective school day",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "endDate": { "type": "string" },
+        "description": { "type": "string" },
+        "color": { "type": "string" }
+      },
+      "required": ["id", "date", "description", "color"]
+    },
+    "SchoolIdentity": {
+      "title": "SchoolIdentity",
+      "description": "Identity of the school",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "npsn": { "type": "string" },
+        "address": { "type": "string" },
+        "principalName": { "type": "string" },
+        "principalNip": { "type": "string" },
+        "city": { "type": "string" }
+      },
+      "required": ["name", "npsn", "address", "principalName", "principalNip", "city"]
+    },
+    "TeacherIdentity": {
+      "title": "TeacherIdentity",
+      "description": "Identity of the teacher and school",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "nip": { "type": "string" },
+        "schoolName": { "type": "string" },
+        "principalName": { "type": "string" },
+        "principalNip": { "type": "string" },
+        "city": { "type": "string" }
+      },
+      "required": ["name", "nip", "schoolName", "principalName", "principalNip", "city"]
+    },
+    "ScheduleItem": {
+      "title": "ScheduleItem",
+      "description": "A row in the schedule table",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "time": { "type": "string" },
+        "monday": { "type": "string" },
+        "tuesday": { "type": "string" },
+        "wednesday": { "type": "string" },
+        "thursday": { "type": "string" },
+        "friday": { "type": "string" },
+        "saturday": { "type": "string" }
+      },
+      "required": ["id", "time", "monday", "tuesday", "wednesday", "thursday", "friday"]
+    },
+    "CurriculumSubject": {
+      "title": "CurriculumSubject",
+      "description": "A subject in the curriculum",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "no": { "type": "string" },
+        "name": { "type": "string" },
+        "hoursPerWeek": { "type": ["number", "string"] },
+        "isSubItem": { "type": "boolean" }
+      },
+      "required": ["id", "no", "name", "hoursPerWeek"]
+    },
+    "SchoolSettings": {
+      "title": "SchoolSettings",
+      "description": "Settings for the general school calendar",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "startYear": { "type": "number" },
+        "schoolDays": { "type": "number" },
+        "identity": { "$ref": "#/entities/SchoolIdentity" },
+        "holidays": {
+          "type": "array",
+          "items": { "$ref": "#/entities/Holiday" }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "startYear", "schoolDays", "identity", "holidays", "updatedAt"]
+    },
+    "ClassSettings": {
+      "title": "ClassSettings",
+      "description": "Settings for a specific class calendar",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "startYear": { "type": "number" },
+        "grade": { "type": "number" },
+        "schoolDays": { "type": "number" },
+        "identity": { "$ref": "#/entities/TeacherIdentity" },
+        "holidays": {
+          "type": "array",
+          "items": { "$ref": "#/entities/Holiday" }
+        },
+        "schedule": {
+          "type": "array",
+          "items": { "$ref": "#/entities/ScheduleItem" }
+        },
+        "curriculum": {
+          "type": "array",
+          "items": { "$ref": "#/entities/CurriculumSubject" }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "startYear", "grade", "schoolDays", "identity", "holidays", "schedule", "curriculum", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}/schoolSettings/{year}": {
+      "schema": { "$ref": "#/entities/SchoolSettings" },
+      "description": "Stores the school-level calendar settings per year for a user."
+    },
+    "users/{userId}/classSettings/{year_grade}": {
+      "schema": { "$ref": "#/entities/ClassSettings" },
+      "description": "Stores the class-level calendar settings per year and grade for a user."
+    }
+  }
+}
