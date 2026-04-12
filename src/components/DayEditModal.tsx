@@ -18,14 +18,17 @@ interface DayEditModalProps {
 export function DayEditModal({ isOpen, onClose, selectedDate, existingHoliday, onSave, onDelete }: DayEditModalProps) {
   const [description, setDescription] = useState('');
   const [color, setColor] = useState(defaultColors[0]);
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     if (existingHoliday) {
       setDescription(existingHoliday.description);
       setColor(existingHoliday.color);
+      setEndDate(existingHoliday.endDate || '');
     } else {
       setDescription('');
       setColor(defaultColors[0]);
+      setEndDate('');
     }
   }, [existingHoliday, isOpen]);
 
@@ -44,7 +47,7 @@ export function DayEditModal({ isOpen, onClose, selectedDate, existingHoliday, o
     const holidayToSave: Holiday = {
       id: existingHoliday ? existingHoliday.id : Math.random().toString(36).substr(2, 9),
       date: existingHoliday ? existingHoliday.date : dateStr,
-      endDate: existingHoliday ? existingHoliday.endDate : undefined,
+      endDate: endDate ? endDate : undefined,
       description,
       color
     };
@@ -79,11 +82,23 @@ export function DayEditModal({ isOpen, onClose, selectedDate, existingHoliday, o
           </div>
 
           <div className="p-6 space-y-6">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tanggal Terpilih</p>
-              <p className="font-medium text-gray-900">
-                {format(selectedDate, 'EEEE, d MMMM yyyy', { locale: id })}
-              </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Tanggal Mulai</p>
+                <p className="font-medium text-gray-900">
+                  {format(selectedDate, 'EEEE, d MMM yyyy', { locale: id })}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Sampai Tanggal (Opsional)</label>
+                <input 
+                  type="date" 
+                  value={endDate}
+                  min={format(selectedDate, 'yyyy-MM-dd')}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700"
+                />
+              </div>
             </div>
 
             <div>
