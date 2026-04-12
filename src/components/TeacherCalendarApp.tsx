@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { TeacherIdentity, Holiday, ScheduleItem, CurriculumSubject } from '../types';
 import { getDefaultHolidays, defaultCurriculum } from '../lib/defaultData';
 import { TeacherForm } from './TeacherForm';
-import { HolidayManager } from './HolidayManager';
 import { CalendarView } from './CalendarView';
 import { EffectiveDaysAnalysis } from './EffectiveDaysAnalysis';
 import { ScheduleTable } from './ScheduleTable';
@@ -149,10 +148,6 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
 
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
               <TeacherForm identity={identity} onChange={setIdentity} />
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-              <HolidayManager holidays={holidays} onChange={setHolidays} />
             </motion.div>
           </div>
 

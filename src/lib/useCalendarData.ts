@@ -44,6 +44,10 @@ export function useSchoolCalendarData(startYear: number) {
     return () => unsubscribe();
   }, [startYear, auth.currentUser]);
 
+  const sanitizeData = (data: any) => {
+    return JSON.parse(JSON.stringify(data));
+  };
+
   const saveSchoolData = async () => {
     if (!auth.currentUser) {
       alert("Silakan masuk (login) terlebih dahulu untuk menyimpan pengaturan.");
@@ -52,18 +56,18 @@ export function useSchoolCalendarData(startYear: number) {
     setIsSaving(true);
     try {
       const docRef = doc(db, `users/${auth.currentUser.uid}/schoolSettings/${startYear}`);
-      await setDoc(docRef, {
+      await setDoc(docRef, sanitizeData({
         uid: auth.currentUser.uid,
         startYear,
         schoolDays,
         identity,
         holidays,
         updatedAt: new Date().toISOString()
-      });
+      }));
       alert("Pengaturan kalender sekolah berhasil disimpan!");
     } catch (error) {
       console.error("Error saving school data:", error);
-      alert("Gagal menyimpan pengaturan.");
+      alert(`Gagal menyimpan pengaturan: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsSaving(false);
     }
@@ -137,6 +141,10 @@ export function useClassCalendarData(startYear: number, grade: number) {
     loadData();
   }, [startYear, grade, auth.currentUser]);
 
+  const sanitizeData = (data: any) => {
+    return JSON.parse(JSON.stringify(data));
+  };
+
   const saveClassData = async () => {
     if (!auth.currentUser) {
       alert("Silakan masuk (login) terlebih dahulu untuk menyimpan pengaturan.");
@@ -145,7 +153,7 @@ export function useClassCalendarData(startYear: number, grade: number) {
     setIsSaving(true);
     try {
       const docRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${grade}`);
-      await setDoc(docRef, {
+      await setDoc(docRef, sanitizeData({
         uid: auth.currentUser.uid,
         startYear,
         grade,
@@ -155,11 +163,11 @@ export function useClassCalendarData(startYear: number, grade: number) {
         schedule,
         curriculum,
         updatedAt: new Date().toISOString()
-      });
+      }));
       alert(`Pengaturan kalender kelas ${grade} berhasil disimpan!`);
     } catch (error) {
       console.error("Error saving class data:", error);
-      alert("Gagal menyimpan pengaturan.");
+      alert(`Gagal menyimpan pengaturan: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsSaving(false);
     }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { SchoolForm } from './components/SchoolForm';
-import { HolidayManager } from './components/HolidayManager';
 import { CalendarView } from './components/CalendarView';
 import { exportToWord } from './lib/exportWord';
 import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Save } from 'lucide-react';
@@ -173,10 +172,6 @@ export default function App() {
 
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
               <SchoolForm identity={identity} onChange={setIdentity} />
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-              <HolidayManager holidays={holidays} onChange={setHolidays} />
             </motion.div>
           </div>
 
