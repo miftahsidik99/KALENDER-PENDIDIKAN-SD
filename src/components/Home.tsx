@@ -68,7 +68,7 @@ export function Home({ onStart }: HomeProps) {
 
         {/* Selection Cards */}
         <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -117,6 +117,62 @@ export function Home({ onStart }: HomeProps) {
               ))}
             </div>
           </motion.div>
+        </motion.div>
+
+        {/* Matriks Regulasi Kurikulum Card */}
+        <motion.div
+          className="max-w-6xl mx-auto"
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] rounded-3xl shadow-2xl shadow-purple-900/20 hover:shadow-purple-900/40 transition-all duration-500 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-white/20 backdrop-blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="bg-white p-8 rounded-[22px] relative z-10 h-full flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold uppercase tracking-wider mb-4">
+                  <FileText size={14} />
+                  <span>Dokumen Penting</span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3 leading-tight">
+                  Matriks Regulasi Kurikulum <br className="hidden md:block" />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600">Periode (2023–2026)</span>
+                </h3>
+                <p className="text-gray-600 mb-6 md:mb-0">
+                  Akses kumpulan dokumen regulasi kurikulum terbaru yang disusun berdasarkan tahun pelajaran untuk memudahkan referensi Anda.
+                </p>
+              </div>
+              <div className="flex flex-col w-full md:w-auto gap-3">
+                <a 
+                  href="https://drive.google.com/drive/folders/1fIe8bQ6ZBdBD6YpLOUufZmy51eo25YjJ?usp=sharing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 px-6 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-xl transition-colors border border-indigo-100 hover:border-indigo-200"
+                >
+                  <span>Regulasi 2023-2024</span>
+                  <ArrowRight size={18} />
+                </a>
+                <a 
+                  href="https://drive.google.com/drive/folders/1tKtcrz1PbimTvPK54uAPneiKsoNhOSkF?usp=sharing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 px-6 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-xl transition-colors border border-purple-100 hover:border-purple-200"
+                >
+                  <span>Regulasi 2024-2025</span>
+                  <ArrowRight size={18} />
+                </a>
+                <a 
+                  href="https://drive.google.com/drive/folders/1GyQpND_Nv0faRXvyQtl0vI7RU2zz30c7?usp=sharing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 px-6 py-3 bg-pink-50 hover:bg-pink-100 text-pink-700 font-semibold rounded-xl transition-colors border border-pink-100 hover:border-pink-200"
+                >
+                  <span>Regulasi 2025-2026</span>
+                  <ArrowRight size={18} />
+                </a>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </main>
     </div>

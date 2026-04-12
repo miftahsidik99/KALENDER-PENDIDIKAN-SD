@@ -25,6 +25,9 @@ export function CurriculumStructure({ subjects, onChange, grade }: Props) {
         <h2 className="text-xl md:text-2xl font-bold text-gray-900 uppercase tracking-wide mb-1">
           STRUKTUR KURIKULUM KELAS {grade}
         </h2>
+        <p className="text-sm text-blue-600 italic print:hidden">
+          * Klik pada teks atau angka di dalam tabel untuk mengedit data (termasuk beban JP).
+        </p>
       </div>
 
       <div className="overflow-x-auto flex justify-center">
@@ -44,7 +47,8 @@ export function CurriculumStructure({ subjects, onChange, grade }: Props) {
                     type="text" 
                     value={sub.no} 
                     onChange={(e) => handleEdit(sub.id, 'no', e.target.value)}
-                    className="w-full text-center outline-none bg-transparent"
+                    className="w-full text-center outline-none bg-transparent hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-emerald-500 rounded transition-all"
+                    title="Klik untuk mengedit"
                   />
                 </td>
                 <td className={`border-2 border-black py-2 px-4 ${sub.isSubItem ? 'pl-8' : ''}`}>
@@ -52,7 +56,8 @@ export function CurriculumStructure({ subjects, onChange, grade }: Props) {
                     type="text" 
                     value={sub.name} 
                     onChange={(e) => handleEdit(sub.id, 'name', e.target.value)}
-                    className="w-full outline-none bg-transparent"
+                    className="w-full outline-none bg-transparent hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-emerald-500 rounded px-1 transition-all"
+                    title="Klik untuk mengedit"
                   />
                 </td>
                 <td className="border-2 border-black py-2 px-4 text-center">
@@ -60,7 +65,8 @@ export function CurriculumStructure({ subjects, onChange, grade }: Props) {
                     type="text" 
                     value={sub.hoursPerWeek} 
                     onChange={(e) => handleEdit(sub.id, 'hoursPerWeek', e.target.value)}
-                    className="w-full text-center outline-none bg-transparent"
+                    className="w-full text-center outline-none bg-transparent hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-emerald-500 rounded transition-all font-semibold text-blue-700"
+                    title="Klik untuk mengedit beban JP"
                   />
                 </td>
               </tr>
