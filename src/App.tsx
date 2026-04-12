@@ -57,7 +57,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginPage />;
+    return <LoginPage onLoginSuccess={() => setCurrentView('home')} />;
   }
 
   if (currentView === 'home') {

@@ -3,7 +3,14 @@ import { signInWithGoogle } from '../firebase';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export function LoginPage() {
+export function LoginPage({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
+  const handleLogin = async () => {
+    await signInWithGoogle();
+    if (onLoginSuccess) {
+      onLoginSuccess();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4 selection:bg-blue-100 selection:text-blue-900">
       <motion.div 
@@ -18,7 +25,7 @@ export function LoginPage() {
         <p className="text-gray-500 mb-8">Generator Kalender Pendidikan & Administrasi Guru</p>
         
         <button
-          onClick={signInWithGoogle}
+          onClick={handleLogin}
           className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 px-6 py-3.5 rounded-xl text-base font-semibold transition-all shadow-sm"
         >
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
