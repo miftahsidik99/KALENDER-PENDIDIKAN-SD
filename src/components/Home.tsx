@@ -174,6 +174,62 @@ export function Home({ onStart }: HomeProps) {
             </div>
           </div>
         </motion.div>
+
+        {/* Kalender Acuan Card */}
+        <motion.div
+          className="max-w-6xl mx-auto mt-8"
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-[2px] rounded-3xl shadow-2xl shadow-teal-900/20 hover:shadow-teal-900/40 transition-all duration-500 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-white/20 backdrop-blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="bg-white p-8 rounded-[22px] relative z-10 h-full flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100 text-teal-700 text-xs font-bold uppercase tracking-wider mb-4">
+                  <Calendar size={14} />
+                  <span>Referensi Resmi</span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3 leading-tight">
+                  Kalender Acuan Provinsi Jabar <br className="hidden md:block" />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-cyan-600">Periode (2023–2026)</span>
+                </h3>
+                <p className="text-gray-600 mb-6 md:mb-0">
+                  Akses dokumen kalender pendidikan acuan resmi dari Provinsi Jawa Barat untuk berbagai tahun pelajaran.
+                </p>
+              </div>
+              <div className="flex flex-col w-full md:w-auto gap-3">
+                <a 
+                  href="https://drive.google.com/file/d/1mJe05go6Ukno3vADex0hMdIbw0tTyEWa/view?usp=sharing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 px-6 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold rounded-xl transition-colors border border-emerald-100 hover:border-emerald-200"
+                >
+                  <span>Acuan 2023-2024</span>
+                  <ArrowRight size={18} />
+                </a>
+                <a 
+                  href="https://drive.google.com/file/d/115lt2W6slpsvKXxnjW-Q9_tpKl5cQGY1/view?usp=sharing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 px-6 py-3 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold rounded-xl transition-colors border border-teal-100 hover:border-teal-200"
+                >
+                  <span>Acuan 2024-2025</span>
+                  <ArrowRight size={18} />
+                </a>
+                <a 
+                  href="https://drive.google.com/file/d/10Xd_kDqepu8ZGSey5O4_jwrhNa6cDzvj/view?usp=sharing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 px-6 py-3 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-semibold rounded-xl transition-colors border border-cyan-100 hover:border-cyan-200"
+                >
+                  <span>Acuan 2025-2026</span>
+                  <ArrowRight size={18} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </main>
     </div>
   );
