@@ -471,6 +471,26 @@ export const exportTeacherWord = async (
         new Paragraph({ children: [new TextRun({ text: "KALENDER PENDIDIKAN SEMESTER 2", bold: true, size: 24 })], spacing: { before: 400, after: 200 } }),
         createSemesterLayout(months.slice(6, 12)),
 
+        // Holiday Legend (Keterangan)
+        new Paragraph({
+          children: [new TextRun({ text: "KETERANGAN HARI LIBUR / NON-EFEKTIF:", bold: true, size: 20 })],
+          spacing: { before: 400, after: 200 }
+        }),
+        ...holidays.map(h => {
+          const dateStr = h.endDate 
+            ? `${format(parseISO(h.date), 'dd MMM yyyy', { locale: id })} - ${format(parseISO(h.endDate), 'dd MMM yyyy', { locale: id })}`
+            : format(parseISO(h.date), 'dd MMM yyyy', { locale: id });
+            
+          return new Paragraph({
+            children: [
+              new TextRun({ text: "■ ", color: h.color.replace('#', '') }),
+              new TextRun({ text: `${dateStr} : `, bold: true, size: 20 }),
+              new TextRun({ text: h.description, size: 20 })
+            ],
+            spacing: { after: 100 }
+          });
+        }),
+
         new Paragraph({ children: [new PageBreak()] }),
 
         // HBE Analysis Semester 1
