@@ -3,20 +3,19 @@ import { ScheduleItem, CurriculumSubject } from '../types';
 export function getRecommendedSchedule(grade: number, schoolDays: 5 | 6, startYear: number = 2024, curriculum: CurriculumSubject[] = []): ScheduleItem[] {
   // standard time slots
   const schedule: ScheduleItem[] = [
-    { id: '1', time: '07:00 - 07:35', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: '2', time: '07:35 - 08:10', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: '3', time: '08:10 - 08:45', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: 'break1', time: '08:45 - 09:00', monday: 'ISTIRAHAT', tuesday: 'ISTIRAHAT', wednesday: 'ISTIRAHAT', thursday: 'ISTIRAHAT', friday: 'ISTIRAHAT', saturday: 'ISTIRAHAT' },
-    { id: '4', time: '09:00 - 09:35', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: '5', time: '09:35 - 10:10', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: '6', time: '10:10 - 10:45', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: 'break2', time: '10:45 - 11:00', monday: 'ISTIRAHAT', tuesday: 'ISTIRAHAT', wednesday: 'ISTIRAHAT', thursday: 'ISTIRAHAT', friday: 'ISTIRAHAT', saturday: 'ISTIRAHAT' },
-    { id: '7', time: '11:00 - 11:35', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: '8', time: '11:35 - 12:10', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: '9', time: '12:10 - 12:45', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: '10', time: '12:45 - 13:20', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: '11', time: '13:20 - 13:55', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
-    { id: '12', time: '13:55 - 14:30', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '1', time: '07:00 - 07:40', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '2', time: '07:40 - 08:15', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '3', time: '08:15 - 08:50', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '4', time: '08:50 - 09:25', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '5', time: '09:25 - 10:00', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: 'break1', time: '10:00 - 10:45', monday: 'ISTIRAHAT', tuesday: 'ISTIRAHAT', wednesday: 'ISTIRAHAT', thursday: 'ISTIRAHAT', friday: 'ISTIRAHAT', saturday: 'ISTIRAHAT' },
+    { id: '6', time: '10:45 - 11:20', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '7', time: '11:20 - 11:55', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '8', time: '11:55 - 12:30', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '9', time: '12:30 - 13:05', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '10', time: '13:05 - 13:40', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '11', time: '13:40 - 14:15', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
+    { id: '12', time: '14:15 - 14:50', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '' },
   ];
 
   const days: (keyof ScheduleItem)[] = schoolDays === 5 
@@ -263,7 +262,7 @@ export function getRecommendedSchedule(grade: number, schoolDays: 5 | 6, startYe
   // Clear remaining empties to "-"
   schedule.forEach(r => {
     days.forEach(day => {
-      if (!(r as any)[day] && r.id !== 'break1' && r.id !== 'break2') {
+      if (!(r as any)[day] && r.id !== 'break1') {
           (r as any)[day] = '-';
       }
     });
