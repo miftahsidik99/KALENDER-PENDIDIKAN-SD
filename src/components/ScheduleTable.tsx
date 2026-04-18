@@ -1,14 +1,16 @@
 import React from 'react';
 import { ScheduleItem } from '../types';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Wand2, ShieldCheck } from 'lucide-react';
 
 interface ScheduleTableProps {
   schedule: ScheduleItem[];
   onChange: (schedule: ScheduleItem[]) => void;
   schoolDays: 5 | 6;
+  onAutoFill?: () => void;
+  onCheckSync?: () => void;
 }
 
-export function ScheduleTable({ schedule, onChange, schoolDays }: ScheduleTableProps) {
+export function ScheduleTable({ schedule, onChange, schoolDays, onAutoFill, onCheckSync }: ScheduleTableProps) {
   const handleChange = (id: string, field: keyof ScheduleItem, value: string) => {
     onChange(schedule.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
@@ -33,14 +35,34 @@ export function ScheduleTable({ schedule, onChange, schoolDays }: ScheduleTableP
 
   return (
     <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <h2 className="text-2xl font-bold text-gray-800">Jadwal Pelajaran</h2>
-        <button
-          onClick={handleAddRow}
-          className="flex items-center gap-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-        >
-          <Plus size={16} /> Tambah Baris
-        </button>
+        <div className="flex items-center gap-2 flex-wrap print:hidden">
+          {onAutoFill && (
+            <button
+              onClick={onAutoFill}
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 px-3 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm group"
+              title="Isi jadwal otomatis untuk meminimalisasi bentrok"
+            >
+              <Wand2 size={16} className="group-hover:rotate-12 transition-transform" /> Rekomendasi Jadwal
+            </button>
+          )}
+          {onCheckSync && (
+            <button
+              onClick={onCheckSync}
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 px-3 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm group"
+              title="Cek sinkronisasi kurikulum dan bentrok dengan kelas lain"
+            >
+              <ShieldCheck size={16} className="group-hover:scale-110 transition-transform" /> Cek Sinkronisasi
+            </button>
+          )}
+          <button
+            onClick={handleAddRow}
+            className="flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-gray-200"
+          >
+            <Plus size={16} /> Tambah Waktu
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

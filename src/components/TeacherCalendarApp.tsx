@@ -7,11 +7,15 @@ import { EffectiveDaysAnalysis } from './EffectiveDaysAnalysis';
 import { ScheduleTable } from './ScheduleTable';
 import { CurriculumStructure } from './CurriculumStructure';
 import { TimeAllocation } from './TimeAllocation';
+import { ScheduleSyncAlert } from './ScheduleSyncAlert';
+import { getRecommendedSchedule } from '../lib/scheduleGenerator';
 import { exportTeacherWord } from '../lib/exportTeacherWord';
 import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Save } from 'lucide-react';
 import { motion } from 'motion/react';
 import { AuthButton } from './AuthButton';
 import { useClassCalendarData } from '../lib/useCalendarData';
+import { db, auth } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface TeacherCalendarAppProps {
   grade: number;
@@ -22,6 +26,12 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
   const [startYear, setStartYear] = useState<number>(new Date().getFullYear());
   const [paperSize, setPaperSize] = useState<'A4' | 'F4'>('A4');
   const [isExporting, setIsExporting] = useState(false);
+  const [syncState, setSyncState] = useState<{ isOpen: boolean; type: 'loading' | 'results'; discrepancies: string[]; clashes: string[] }>({
+    isOpen: false,
+    type: 'loading',
+    discrepancies: [],
+    clashes: []
+  });
 
   const {
     schoolDays, setSchoolDays,
@@ -42,6 +52,78 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleCheckSync = async () => {
+    if (!auth.currentUser) return;
+    setSyncState({ isOpen: true, type: 'loading', discrepancies: [], clashes: [] });
+
+    const discrepancies: string[] = [];
+    const clashes: string[] = [];
+    
+    // 1. Check against current curriculum (internal validation)
+    const scheduledCounts: Record<string, number> = {};
+    const dayKeys = schoolDays === 5 
+      ? ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as const
+      : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+
+    schedule.forEach(row => {
+      dayKeys.forEach(day => {
+        const parsed = String(row[day] || '').trim().toUpperCase();
+        if (parsed && parsed !== '-' && parsed !== 'ISTIRAHAT' && parsed !== 'UPACARA') {
+          scheduledCounts[parsed] = (scheduledCounts[parsed] || 0) + 1;
+        }
+      });
+    });
+
+    curriculum.forEach(sub => {
+      if (sub.isSubItem) return;
+      const required = Number(sub.hoursPerWeek) || 0;
+      const actual = scheduledCounts[sub.name.trim().toUpperCase()] || 0;
+      if (actual < required) {
+        discrepancies.push(`${sub.name}: Kurang ${required - actual} JP (Dibutuhkan: ${required}, Terjadwal: ${actual})`);
+      } else if (actual > required) {
+        discrepancies.push(`${sub.name}: Berlebih ${actual - required} JP (Dibutuhkan: ${required}, Terjadwal: ${actual})`);
+      }
+    });
+
+    // 2. Fetch other classes for clash detection
+    const specializedMapel = ['PJOK', 'PAIBP', 'PENDIDIKAN AGAMA ISLAM', 'SENI BUDAYA'];
+    const daysMap: Record<string, string> = {
+      monday: 'Senin', tuesday: 'Selasa', wednesday: 'Rabu', 
+      thursday: 'Kamis', friday: "Jum'at", saturday: 'Sabtu'
+    };
+
+    try {
+      for (let i = 1; i <= 6; i++) {
+        if (i === grade) continue;
+        const docRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${i}`);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          const otherSchedule = snap.data().schedule as ScheduleItem[];
+          
+          if (otherSchedule && Array.isArray(otherSchedule)) {
+            schedule.forEach((row, rowIndex) => {
+              const otherRow = otherSchedule[rowIndex];
+              if (!otherRow) return;
+              
+              dayKeys.forEach(day => {
+                const myMapel = String(row[day] || '').trim().toUpperCase();
+                const otherMapel = String(otherRow[day] || '').trim().toUpperCase();
+                
+                if (myMapel && specializedMapel.includes(myMapel) && myMapel === otherMapel) {
+                  clashes.push(`Bentrok Mapel Guru Khusus (${myMapel}) dengan Kelas ${i} pada hari ${daysMap[day]} waktu ${row.time}`);
+                }
+              });
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching other classes for clash detection", e);
+    }
+
+    setSyncState({ isOpen: true, type: 'results', discrepancies, clashes });
   };
 
   return (
@@ -232,7 +314,12 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
               transition={{ delay: 0.3 }}
               className="print:shadow-none print:border-none print:p-0"
             >
-              <ScheduleTable schedule={schedule} onChange={setSchedule} schoolDays={schoolDays} />
+              <ScheduleTable 
+                schedule={schedule} 
+                onChange={setSchedule} 
+                schoolDays={schoolDays} 
+                onCheckSync={handleCheckSync}
+              />
             </motion.div>
 
             {/* Page Break for Print */}
@@ -258,6 +345,14 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
           </div>
         </div>
       </main>
+
+      <ScheduleSyncAlert 
+        isOpen={syncState.isOpen}
+        type={syncState.type}
+        discrepancies={syncState.discrepancies}
+        clashes={syncState.clashes}
+        onClose={() => setSyncState(prev => ({ ...prev, isOpen: false }))}
+      />
     </motion.div>
   );
 }

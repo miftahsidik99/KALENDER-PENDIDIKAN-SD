@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SchoolForm } from './components/SchoolForm';
 import { CalendarView } from './components/CalendarView';
 import { exportToWord } from './lib/exportWord';
-import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Save, Copy } from 'lucide-react';
+import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Save, Copy, Wand2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Home } from './components/Home';
 import { TeacherCalendarApp } from './components/TeacherCalendarApp';
@@ -32,7 +32,7 @@ export default function App() {
     schoolDays, setSchoolDays, 
     identity, setIdentity, 
     holidays, setHolidays, 
-    saveSchoolData, syncHolidaysToAllClasses, isSaving 
+    saveSchoolData, syncHolidaysToAllClasses, generateAllSchedules, isSaving 
   } = useSchoolCalendarData(startYear);
 
   const handleExport = async () => {
@@ -117,7 +117,15 @@ export default function App() {
               className="hidden lg:flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70 animate-pulse-once"
               title="Salin dan Terapkan libur kalender ini ke kalender Guru Kelas 1 - 6"
             >
-              <Copy size={18} /> <span className="hidden sm:inline">Terapkan Kebijakan ke Semua Kelas</span>
+              <Copy size={18} /> <span className="hidden xl:inline">Terapkan Kebijakan Libur</span>
+            </button>
+            <button
+              onClick={generateAllSchedules}
+              disabled={isSaving}
+              className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70 group"
+              title="Hasilkan otomatis dan distribusikan jadwal pelajaran untuk kelas 1 - 6"
+            >
+              <Wand2 size={18} className="group-hover:rotate-12 transition-transform" /> <span className="hidden xl:inline">Distribusikan Jadwal</span>
             </button>
             <button
               onClick={handleExport}
@@ -148,7 +156,14 @@ export default function App() {
               disabled={isSaving}
               className="lg:hidden w-full flex justify-center items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl text-base font-semibold transition-all shadow-sm disabled:opacity-70"
             >
-              <Copy size={20} /> Terapkan Kebijakan Libur ke Semua Kelas (1-6)
+              <Copy size={20} /> Terapkan Kebijakan Libur (1-6)
+            </button>
+            <button
+              onClick={generateAllSchedules}
+              disabled={isSaving}
+              className="lg:hidden w-full flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl text-base font-semibold transition-all shadow-sm disabled:opacity-70"
+            >
+              <Wand2 size={20} /> Distribusikan Jadwal (1-6)
             </button>
 
             <motion.div 

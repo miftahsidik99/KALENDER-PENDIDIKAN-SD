@@ -3,6 +3,7 @@ import { db, auth } from '../firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { SchoolIdentity, TeacherIdentity, Holiday, ScheduleItem, CurriculumSubject } from '../types';
 import { getDefaultHolidays, defaultCurriculum, defaultScheduleItems } from './defaultData';
+import { getRecommendedSchedule } from './scheduleGenerator';
 
 export function useSchoolCalendarData(startYear: number) {
   const [schoolDays, setSchoolDays] = useState<5 | 6>(6);
@@ -118,7 +119,65 @@ export function useSchoolCalendarData(startYear: number) {
     }
   };
 
-  return { schoolDays, setSchoolDays, identity, setIdentity, holidays, setHolidays, saveSchoolData, syncHolidaysToAllClasses, isSaving, isLoading };
+  const generateAllSchedules = async () => {
+    if (!auth.currentUser) {
+      alert("Silakan masuk (login) terlebih dahulu.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Load school settings to use as a fallback base for empty class settings
+      let baseSchoolDays = schoolDays;
+      let baseHolidays = holidays;
+      let baseIdentity = identity;
+
+      for (let i = 1; i <= 6; i++) {
+        const classRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${i}`);
+        const classSnap = await getDoc(classRef);
+        const rec = getRecommendedSchedule(i, baseSchoolDays, startYear);
+        
+        let writeData: any = {
+          startYear,
+          grade: i,
+          uid: auth.currentUser.uid,
+          schedule: rec,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (classSnap.exists()) {
+          // If the document exists, we just overwrite the schedule via merge
+          await setDoc(classRef, sanitizeData(writeData), { merge: true });
+        } else {
+          // If the document does not exist, we must provide ALL required fields to satisfy Firestore Rules
+          writeData = {
+            ...writeData,
+            schoolDays: baseSchoolDays,
+            identity: {
+              name: 'Nama Guru, S.Pd.',
+              nip: '19800101 200501 1 002',
+              schoolName: baseIdentity.name || 'Sekolah Contoh',
+              className: `Kelas ${i}`,
+              principalName: baseIdentity.principalName || '',
+              principalNip: baseIdentity.principalNip || '',
+              city: baseIdentity.city || ''
+            },
+            holidays: baseHolidays,
+            curriculum: defaultCurriculum,
+          };
+          await setDoc(classRef, sanitizeData(writeData));
+        }
+      }
+      alert("Rekomendasi jadwal berhasil dihasilkan dan didistribusikan ke semua kelas 1 - 6!");
+    } catch (error) {
+      console.error("Error generating schedules:", error);
+      alert(`Gagal mendistribusikan jadwal: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return { schoolDays, setSchoolDays, identity, setIdentity, holidays, setHolidays, saveSchoolData, syncHolidaysToAllClasses, generateAllSchedules, isSaving, isLoading };
 }
 
 export function useClassCalendarData(startYear: number, grade: number) {
