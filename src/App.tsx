@@ -32,7 +32,7 @@ export default function App() {
     schoolDays, setSchoolDays, 
     identity, setIdentity, 
     holidays, setHolidays, 
-    saveSchoolData, syncHolidaysToAllClasses, generateAllSchedules, isSaving 
+    saveSchoolData, generateAllSchedules, isSaving 
   } = useSchoolCalendarData(startYear);
 
   const handleExport = async () => {
@@ -65,7 +65,7 @@ export default function App() {
 
   if (currentView.startsWith('teacher-')) {
     const grade = parseInt(currentView.split('-')[1], 10);
-    return <TeacherCalendarApp grade={grade} onBack={() => setCurrentView('home')} />;
+    return <TeacherCalendarApp grade={grade} onBack={() => setCurrentView('home')} initialStartYear={startYear} />;
   }
 
   return (
@@ -112,14 +112,6 @@ export default function App() {
               </button>
             </div>
             <button
-              onClick={syncHolidaysToAllClasses}
-              disabled={isSaving}
-              className="hidden lg:flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70 animate-pulse-once"
-              title="Salin dan Terapkan libur kalender ini ke kalender Guru Kelas 1 - 6"
-            >
-              <Copy size={18} /> <span className="hidden xl:inline">Terapkan Kebijakan Libur</span>
-            </button>
-            <button
               onClick={generateAllSchedules}
               disabled={isSaving}
               className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70 group"
@@ -150,14 +142,6 @@ export default function App() {
           
           {/* Left Sidebar - Configuration */}
           <div className="lg:col-span-4 space-y-6">
-            {/* Sync button for mobile/tablet */}
-            <button
-              onClick={syncHolidaysToAllClasses}
-              disabled={isSaving}
-              className="lg:hidden w-full flex justify-center items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl text-base font-semibold transition-all shadow-sm disabled:opacity-70"
-            >
-              <Copy size={20} /> Terapkan Kebijakan Libur (1-6)
-            </button>
             <button
               onClick={generateAllSchedules}
               disabled={isSaving}

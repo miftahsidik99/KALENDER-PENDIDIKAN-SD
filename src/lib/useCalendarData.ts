@@ -74,51 +74,6 @@ export function useSchoolCalendarData(startYear: number) {
     }
   };
 
-  const syncHolidaysToAllClasses = async () => {
-    if (!auth.currentUser) {
-      alert("Silakan masuk (login) terlebih dahulu.");
-      return;
-    }
-    
-    const confirmSync = window.confirm("Apakah Anda yakin ingin menyinkronkan pengaturan libur ke semua kalender kelas (Kelas 1 - 6)? Ini akan menyeimbangkan penandaan hari libur di kalender kelas.");
-    if (!confirmSync) return;
-
-    setIsSaving(true);
-    try {
-      // Ensure the school data is saved first
-      const schoolRef = doc(db, `users/${auth.currentUser.uid}/schoolSettings/${startYear}`);
-      await setDoc(schoolRef, sanitizeData({
-        uid: auth.currentUser.uid,
-        startYear,
-        schoolDays,
-        identity,
-        holidays,
-        updatedAt: new Date().toISOString()
-      }));
-
-      // Update all 6 classes
-      for (let i = 1; i <= 6; i++) {
-        const classRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${i}`);
-        const classSnap = await getDoc(classRef);
-        
-        if (classSnap.exists()) {
-          await setDoc(classRef, sanitizeData({
-            ...classSnap.data(),
-            holidays: holidays,
-            schoolDays: schoolDays,
-            updatedAt: new Date().toISOString()
-          }), { merge: true });
-        }
-      }
-      alert("Sinkronisasi hari libur dan konfigurasi hari kerja ke seluruh kalender guru kelas (1-6) berhasil!");
-    } catch (error) {
-      console.error("Error syncing holidays:", error);
-      alert(`Gagal menyalin pengaturan ke kelas: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const generateAllSchedules = async () => {
     if (!auth.currentUser) {
       alert("Silakan masuk (login) terlebih dahulu.");
@@ -135,7 +90,17 @@ export function useSchoolCalendarData(startYear: number) {
       for (let i = 1; i <= 6; i++) {
         const classRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${i}`);
         const classSnap = await getDoc(classRef);
-        const rec = getRecommendedSchedule(i, baseSchoolDays, startYear);
+        
+        let classCurriculum = defaultCurriculum;
+        let existingData: any = {};
+        if (classSnap.exists()) {
+          existingData = classSnap.data();
+          if (existingData.curriculum && Array.isArray(existingData.curriculum)) {
+             classCurriculum = existingData.curriculum;
+          }
+        }
+
+        const rec = getRecommendedSchedule(i, baseSchoolDays, startYear, classCurriculum);
         
         let writeData: any = {
           startYear,
@@ -146,8 +111,27 @@ export function useSchoolCalendarData(startYear: number) {
         };
 
         if (classSnap.exists()) {
-          // If the document exists, we just overwrite the schedule via merge
-          await setDoc(classRef, sanitizeData(writeData), { merge: true });
+          const snapData = classSnap.data();
+          // If the document exists, we guarantee ALL required fields to safely pass Firestore rules
+          await setDoc(classRef, sanitizeData({
+            uid: auth.currentUser.uid,
+            startYear: startYear,
+            grade: i,
+            schedule: rec,
+            holidays: snapData.holidays && snapData.holidays.length > 0 ? snapData.holidays : baseHolidays,
+            identity: {
+              name: snapData?.identity?.name || 'Nama Guru, S.Pd.',
+              nip: snapData?.identity?.nip || '19800101 200501 1 002',
+              schoolName: baseIdentity.name || 'Sekolah Contoh',
+              className: snapData?.identity?.className || `Kelas ${i}`,
+              principalName: baseIdentity.principalName || '',
+              principalNip: baseIdentity.principalNip || '',
+              city: baseIdentity.city || ''
+            },
+            schoolDays: snapData.schoolDays || baseSchoolDays,
+            curriculum: (snapData.curriculum && snapData.curriculum.length > 0) ? snapData.curriculum : classCurriculum,
+            updatedAt: new Date().toISOString()
+          }));
         } else {
           // If the document does not exist, we must provide ALL required fields to satisfy Firestore Rules
           writeData = {
@@ -163,7 +147,7 @@ export function useSchoolCalendarData(startYear: number) {
               city: baseIdentity.city || ''
             },
             holidays: baseHolidays,
-            curriculum: defaultCurriculum,
+            curriculum: classCurriculum,
           };
           await setDoc(classRef, sanitizeData(writeData));
         }
@@ -177,7 +161,7 @@ export function useSchoolCalendarData(startYear: number) {
     }
   };
 
-  return { schoolDays, setSchoolDays, identity, setIdentity, holidays, setHolidays, saveSchoolData, syncHolidaysToAllClasses, generateAllSchedules, isSaving, isLoading };
+  return { schoolDays, setSchoolDays, identity, setIdentity, holidays, setHolidays, saveSchoolData, generateAllSchedules, isSaving, isLoading };
 }
 
 export function useClassCalendarData(startYear: number, grade: number) {
@@ -278,12 +262,64 @@ export function useClassCalendarData(startYear: number, grade: number) {
     }
   };
 
+  const syncWithSchoolCalendar = async () => {
+    if (!auth.currentUser) {
+      alert("Silakan masuk (login) terlebih dahulu.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const schoolDocRef = doc(db, `users/${auth.currentUser.uid}/schoolSettings/${startYear}`);
+      const schoolDocSnap = await getDoc(schoolDocRef);
+
+      if (schoolDocSnap.exists()) {
+        const schoolData = schoolDocSnap.data();
+        
+        setSchoolDays(schoolData.schoolDays);
+        setHolidays(schoolData.holidays);
+        
+        const newIdentity = {
+          ...identity,
+          schoolName: schoolData.identity?.name || identity.schoolName,
+          principalName: schoolData.identity?.principalName || identity.principalName,
+          principalNip: schoolData.identity?.principalNip || identity.principalNip,
+          city: schoolData.identity?.city || identity.city
+        };
+        setIdentity(newIdentity);
+
+        const docRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${grade}`);
+        const classSnap = await getDoc(docRef);
+
+        await setDoc(docRef, sanitizeData({
+          uid: auth.currentUser.uid,
+          startYear,
+          grade,
+          schoolDays: schoolData.schoolDays,
+          identity: newIdentity,
+          holidays: schoolData.holidays,
+          schedule: classSnap.exists() ? classSnap.data().schedule : schedule,
+          curriculum: classSnap.exists() ? classSnap.data().curriculum : curriculum,
+          updatedAt: new Date().toISOString()
+        }));
+
+        alert("Berhasil disingkronkan dengan kalender sekolah!");
+      } else {
+        alert("Data kalender sekolah untuk tahun ini belum diatur. Silakan atur di halaman utama terlebih dahulu.");
+      }
+    } catch (error) {
+      console.error("Error syncing with school calendar:", error);
+      alert(`Gagal menyinkronkan: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return { 
     schoolDays, setSchoolDays, 
     identity, setIdentity, 
     holidays, setHolidays, 
     schedule, setSchedule, 
     curriculum, setCurriculum, 
-    saveClassData, isSaving, isLoading 
+    saveClassData, syncWithSchoolCalendar, isSaving, isLoading 
   };
 }

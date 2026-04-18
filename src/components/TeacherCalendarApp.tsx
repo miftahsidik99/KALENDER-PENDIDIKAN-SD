@@ -10,7 +10,7 @@ import { TimeAllocation } from './TimeAllocation';
 import { ScheduleSyncAlert } from './ScheduleSyncAlert';
 import { getRecommendedSchedule } from '../lib/scheduleGenerator';
 import { exportTeacherWord } from '../lib/exportTeacherWord';
-import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Save } from 'lucide-react';
+import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Save, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { AuthButton } from './AuthButton';
 import { useClassCalendarData } from '../lib/useCalendarData';
@@ -20,10 +20,11 @@ import { doc, getDoc } from 'firebase/firestore';
 interface TeacherCalendarAppProps {
   grade: number;
   onBack: () => void;
+  initialStartYear?: number;
 }
 
-export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
-  const [startYear, setStartYear] = useState<number>(new Date().getFullYear());
+export function TeacherCalendarApp({ grade, onBack, initialStartYear }: TeacherCalendarAppProps) {
+  const [startYear, setStartYear] = useState<number>(initialStartYear || new Date().getFullYear());
   const [paperSize, setPaperSize] = useState<'A4' | 'F4'>('A4');
   const [isExporting, setIsExporting] = useState(false);
   const [syncState, setSyncState] = useState<{ isOpen: boolean; type: 'loading' | 'results'; discrepancies: string[]; clashes: string[] }>({
@@ -39,7 +40,7 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
     holidays, setHolidays,
     schedule, setSchedule,
     curriculum, setCurriculum,
-    saveClassData, isSaving, isLoading
+    saveClassData, syncWithSchoolCalendar, isSaving, isLoading
   } = useClassCalendarData(startYear, grade);
 
   const handleExport = async () => {
@@ -70,16 +71,18 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
     schedule.forEach(row => {
       dayKeys.forEach(day => {
         const parsed = String(row[day] || '').trim().toUpperCase();
-        if (parsed && parsed !== '-' && parsed !== 'ISTIRAHAT' && parsed !== 'UPACARA') {
+        if (parsed && parsed !== '-' && parsed !== 'ISTIRAHAT') {
           scheduledCounts[parsed] = (scheduledCounts[parsed] || 0) + 1;
         }
       });
     });
 
     curriculum.forEach(sub => {
-      if (sub.isSubItem) return;
       const required = Number(sub.hoursPerWeek) || 0;
-      const actual = scheduledCounts[sub.name.trim().toUpperCase()] || 0;
+      if (required === 0) return; // Skip headers with 0 hours
+      
+      const parsedTarget = sub.name.trim().toUpperCase();
+      const actual = scheduledCounts[parsedTarget] || 0;
       if (actual < required) {
         discrepancies.push(`${sub.name}: Kurang ${required - actual} JP (Dibutuhkan: ${required}, Terjadwal: ${actual})`);
       } else if (actual > required) {
@@ -88,7 +91,7 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
     });
 
     // 2. Fetch other classes for clash detection
-    const specializedMapel = ['PJOK', 'PAIBP', 'PENDIDIKAN AGAMA ISLAM', 'SENI BUDAYA'];
+    const specializedMapel = ['PJOK', 'PAIBP', 'PENDIDIKAN AGAMA ISLAM'];
     const daysMap: Record<string, string> = {
       monday: 'Senin', tuesday: 'Selasa', wednesday: 'Rabu', 
       thursday: 'Kamis', friday: "Jum'at", saturday: 'Sabtu'
@@ -175,6 +178,14 @@ export function TeacherCalendarApp({ grade, onBack }: TeacherCalendarAppProps) {
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70"
             >
               {isExporting ? <span className="animate-pulse">Mengekspor...</span> : <><Download size={18} /> <span className="hidden sm:inline">Unduh Word</span></>}
+            </button>
+            <button
+              onClick={syncWithSchoolCalendar}
+              disabled={isSaving}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70"
+              title="Singkronkan libur dan hari belajar dari Kalender Induk"
+            >
+              {isSaving ? <span className="animate-pulse">Menyim...</span> : <><RefreshCw size={18} /> <span className="hidden lg:inline">Singkronkan Kalender Sekolah</span></>}
             </button>
             <button
               onClick={saveClassData}
