@@ -54,10 +54,10 @@ export function TeacherForm({ identity, onChange }: TeacherFormProps) {
           <input
             type="text"
             name="className"
-            value={identity.className}
+            value={identity.className || ''}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50"
-            readOnly
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            placeholder="Contoh: Kelas 1-A"
           />
         </div>
         <div>

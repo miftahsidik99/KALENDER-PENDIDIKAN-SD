@@ -73,7 +73,52 @@ export function useSchoolCalendarData(startYear: number) {
     }
   };
 
-  return { schoolDays, setSchoolDays, identity, setIdentity, holidays, setHolidays, saveSchoolData, isSaving, isLoading };
+  const syncHolidaysToAllClasses = async () => {
+    if (!auth.currentUser) {
+      alert("Silakan masuk (login) terlebih dahulu.");
+      return;
+    }
+    
+    const confirmSync = window.confirm("Apakah Anda yakin ingin menyinkronkan pengaturan libur ke semua kalender kelas (Kelas 1 - 6)? Ini akan menyeimbangkan penandaan hari libur di kalender kelas.");
+    if (!confirmSync) return;
+
+    setIsSaving(true);
+    try {
+      // Ensure the school data is saved first
+      const schoolRef = doc(db, `users/${auth.currentUser.uid}/schoolSettings/${startYear}`);
+      await setDoc(schoolRef, sanitizeData({
+        uid: auth.currentUser.uid,
+        startYear,
+        schoolDays,
+        identity,
+        holidays,
+        updatedAt: new Date().toISOString()
+      }));
+
+      // Update all 6 classes
+      for (let i = 1; i <= 6; i++) {
+        const classRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${i}`);
+        const classSnap = await getDoc(classRef);
+        
+        if (classSnap.exists()) {
+          await setDoc(classRef, sanitizeData({
+            ...classSnap.data(),
+            holidays: holidays,
+            schoolDays: schoolDays,
+            updatedAt: new Date().toISOString()
+          }), { merge: true });
+        }
+      }
+      alert("Sinkronisasi hari libur dan konfigurasi hari kerja ke seluruh kalender guru kelas (1-6) berhasil!");
+    } catch (error) {
+      console.error("Error syncing holidays:", error);
+      alert(`Gagal menyalin pengaturan ke kelas: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return { schoolDays, setSchoolDays, identity, setIdentity, holidays, setHolidays, saveSchoolData, syncHolidaysToAllClasses, isSaving, isLoading };
 }
 
 export function useClassCalendarData(startYear: number, grade: number) {
@@ -81,7 +126,8 @@ export function useClassCalendarData(startYear: number, grade: number) {
   const [identity, setIdentity] = useState<TeacherIdentity>({
     name: 'Nama Guru, S.Pd.',
     nip: '19800101 200501 1 002',
-    schoolName: 'SMAN 1 Contoh',
+    schoolName: 'Sekolah Contoh',
+    className: `Kelas ${grade}`,
     principalName: 'Dr. H. Guru Teladan, M.Pd.',
     principalNip: '19700101 199512 1 001',
     city: 'Kota Bandung'
