@@ -7,6 +7,7 @@ import { useSchoolCalendarData } from '../lib/useCalendarData';
 import { db, auth } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { ScheduleItem } from '../types';
+import { exportSubjectWord } from '../lib/exportSubjectWord';
 
 interface SubjectCalendarAppProps {
   subject: string;
@@ -18,6 +19,8 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
   const [startYear, setStartYear] = useState<number>(initialStartYear || new Date().getFullYear());
   const [schedules, setSchedules] = useState<Record<number, ScheduleItem[]>>({});
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [paperSize, setPaperSize] = useState<'A4' | 'F4'>('A4');
 
   // We use the school calendar data as the reference for holidays and school days
   const {
@@ -55,6 +58,18 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
     loadAllClassSchedules();
   }, [startYear]);
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await exportSubjectWord(subject, identity, startYear, holidays, schoolDays, schedules, paperSize);
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Terjadi kesalahan saat mengekspor dokumen.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -84,18 +99,32 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
             <select
               value={startYear}
               onChange={(e) => setStartYear(Number(e.target.value))}
-              className="pl-3 pr-8 py-1.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-medium bg-gray-50"
+              className="pl-3 pr-8 py-1.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-medium bg-gray-50 hidden sm:block"
             >
               {[2023, 2024, 2025, 2026, 2027].map(year => (
                 <option key={year} value={year}>{year}/{year + 1}</option>
               ))}
             </select>
+            <div className="flex items-center gap-1 sm:gap-2 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setPaperSize('A4')}
+                className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-all ${paperSize === 'A4' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                A4
+              </button>
+              <button
+                onClick={() => setPaperSize('F4')}
+                className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-all ${paperSize === 'F4' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                F4
+              </button>
+            </div>
             <button
-              onClick={() => window.print()}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm"
-              title="Cetak Ke PDF"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm disabled:opacity-70"
             >
-              <Download size={18} /> Cetak (PDF)
+              {isExporting ? <span className="animate-pulse">Mengekspor...</span> : <><Download size={18} /> <span className="hidden sm:inline">Unduh Word</span></>}
             </button>
           </div>
         </div>
