@@ -99,22 +99,45 @@ export function Home({ onStart }: HomeProps) {
                 <Users size={24} />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">Kalender Guru Kelas</h3>
+                <h3 className="text-2xl font-bold text-gray-900">Kalender Pendidik</h3>
                 <p className="text-gray-500 text-sm">Lengkap dengan Analisis Hari Efektif & Jadwal Pelajaran</p>
               </div>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((grade) => (
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wider">Guru Kelas</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {[1, 2, 3, 4, 5, 6].map((grade) => (
+                  <button
+                    key={grade}
+                    onClick={() => onStart(`teacher-${grade}`)}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all group"
+                  >
+                    <BookOpen size={28} className="text-gray-400 group-hover:text-emerald-600 mb-2 transition-colors" />
+                    <span className="font-semibold text-gray-700 group-hover:text-emerald-700">Kelas {grade}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8 border-t border-gray-100 pt-6">
+              <h4 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wider">Guru Mata Pelajaran</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
-                  key={grade}
-                  onClick={() => onStart(`teacher-${grade}`)}
-                  className="flex flex-col items-center justify-center p-4 rounded-2xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all group"
+                  onClick={() => onStart('subject-paibp')}
+                  className="flex flex-col items-center justify-center p-4 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
                 >
-                  <BookOpen size={28} className="text-gray-400 group-hover:text-emerald-600 mb-2 transition-colors" />
-                  <span className="font-semibold text-gray-700 group-hover:text-emerald-700">Kelas {grade}</span>
+                  <BookOpen size={28} className="text-gray-400 group-hover:text-indigo-600 mb-2 transition-colors" />
+                  <span className="font-semibold text-gray-700 group-hover:text-indigo-700">Guru PAIBP</span>
                 </button>
-              ))}
+                <button
+                  onClick={() => onStart('subject-pjok')}
+                  className="flex flex-col items-center justify-center p-4 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
+                >
+                  <BookOpen size={28} className="text-gray-400 group-hover:text-indigo-600 mb-2 transition-colors" />
+                  <span className="font-semibold text-gray-700 group-hover:text-indigo-700">Guru PJOK</span>
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

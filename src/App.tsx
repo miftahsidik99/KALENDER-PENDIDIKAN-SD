@@ -12,6 +12,8 @@ import { LoginPage } from './components/LoginPage';
 import { auth } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
+import { SubjectCalendarApp } from './components/SubjectCalendarApp';
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -66,6 +68,11 @@ export default function App() {
   if (currentView.startsWith('teacher-')) {
     const grade = parseInt(currentView.split('-')[1], 10);
     return <TeacherCalendarApp grade={grade} onBack={() => setCurrentView('home')} initialStartYear={startYear} />;
+  }
+
+  if (currentView.startsWith('subject-')) {
+    const subject = currentView.split('-')[1].toUpperCase();
+    return <SubjectCalendarApp subject={subject} onBack={() => setCurrentView('home')} initialStartYear={startYear} />;
   }
 
   return (
