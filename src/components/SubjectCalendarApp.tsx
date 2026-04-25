@@ -18,6 +18,7 @@ interface SubjectCalendarAppProps {
 export function SubjectCalendarApp({ subject, onBack, initialStartYear }: SubjectCalendarAppProps) {
   const [startYear, setStartYear] = useState<number>(initialStartYear || new Date().getFullYear());
   const [schedules, setSchedules] = useState<Record<number, ScheduleItem[]>>({});
+  const [classHolidays, setClassHolidays] = useState<Record<number, Holiday[]>>({});
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [paperSize, setPaperSize] = useState<'A4' | 'F4'>('A4');
@@ -35,19 +36,24 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
       if (!auth.currentUser) return;
       setIsLoadingSchedules(true);
       const newSchedules: Record<number, ScheduleItem[]> = {};
+      const newHolidays: Record<number, Holiday[]> = {};
       
       try {
         for (let i = 1; i <= 6; i++) {
           const docRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${i}`);
           const snap = await getDoc(docRef);
-          if (snap.exists() && snap.data().schedule) {
-            newSchedules[i] = snap.data().schedule;
+          if (snap.exists()) {
+            const data = snap.data();
+            newSchedules[i] = data.schedule || [];
+            newHolidays[i] = data.holidays || [];
           } else {
             // Default empty schedule if not compiled
             newSchedules[i] = [];
+            newHolidays[i] = [];
           }
         }
         setSchedules(newSchedules);
+        setClassHolidays(newHolidays);
       } catch (error) {
         console.error("Error loading class schedules:", error);
       } finally {
@@ -61,7 +67,7 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      await exportSubjectWord(subject, identity, startYear, holidays, schoolDays, schedules, paperSize);
+      await exportSubjectWord(subject, identity, startYear, holidays, schoolDays, schedules, classHolidays, paperSize);
     } catch (error) {
       console.error("Export failed:", error);
       alert("Terjadi kesalahan saat mengekspor dokumen.");
@@ -163,7 +169,8 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
               <SubjectEffectiveDaysAnalysis 
                 subject={subject}
                 startYear={startYear}
-                holidays={holidays}
+                schoolHolidays={holidays}
+                classHolidays={classHolidays}
                 schoolDays={schoolDays}
                 schedules={schedules}
               />

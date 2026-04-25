@@ -6,7 +6,8 @@ import { id } from 'date-fns/locale';
 interface SubjectEffectiveDaysAnalysisProps {
   subject: string;
   startYear: number;
-  holidays: Holiday[];
+  schoolHolidays: Holiday[];
+  classHolidays: Record<number, Holiday[]>;
   schoolDays: 5 | 6;
   schedules: Record<number, ScheduleItem[]>;
 }
@@ -34,10 +35,19 @@ const toRoman = (num: number) => {
   return roman[num - 1] || num.toString();
 };
 
-export function SubjectEffectiveDaysAnalysis({ subject, startYear, holidays, schoolDays, schedules }: SubjectEffectiveDaysAnalysisProps) {
+const isSubjectMatch = (subjectName: string, targetSubject: string) => {
+  const s = subjectName.toUpperCase();
+  const t = targetSubject.toUpperCase();
+  if (s.includes(t)) return true;
+  if (t === 'PAIBP' && (s.includes('PAI') || s.includes('AGAMA') || s.includes('PENDIDIKAN AGAMA'))) return true;
+  return false;
+};
+
+export function SubjectEffectiveDaysAnalysis({ subject, startYear, schoolHolidays, classHolidays, schoolDays, schedules }: SubjectEffectiveDaysAnalysisProps) {
   
-  const isHoliday = (date: Date) => {
-    return holidays.some(h => {
+  const isHoliday = (date: Date, grade: number) => {
+    const activeHolidays = (classHolidays[grade] && classHolidays[grade].length > 0) ? classHolidays[grade] : schoolHolidays;
+    return activeHolidays.some(h => {
       const start = parseISO(h.date);
       if (h.endDate) {
         const end = parseISO(h.endDate);
@@ -61,7 +71,7 @@ export function SubjectEffectiveDaysAnalysis({ subject, startYear, holidays, sch
             const key = dayKeys[dayNum];
             const subjectName = item[key]?.toString().trim() || '';
             if (subjectName && subjectName !== '-' && subjectName.toUpperCase() !== 'ISTIRAHAT') {
-              if (subjectName.toUpperCase().includes(subject.toUpperCase())) {
+              if (isSubjectMatch(subjectName, subject)) {
                 hoursPerWeek++;
                 const existing = daysMap.get(dayNum) || [];
                 const slotNum = parseInt(item.id);
@@ -105,7 +115,7 @@ export function SubjectEffectiveDaysAnalysis({ subject, startYear, holidays, sch
         days.forEach(day => {
           const dayOfWeek = getDay(day);
           if (daysTaught.includes(dayOfWeek)) {
-            if (!isHoliday(day)) {
+            if (!isHoliday(day, grade)) {
               count++;
             }
           }
@@ -146,7 +156,7 @@ export function SubjectEffectiveDaysAnalysis({ subject, startYear, holidays, sch
           const end = endOfMonth(monthDate);
           const days = eachDayOfInterval({ start, end });
           days.forEach(d => {
-            if (getDay(d) === day && !isHoliday(d)) {
+            if (getDay(d) === day && !isHoliday(d, grade)) {
               hbeForDay++;
             }
           });
