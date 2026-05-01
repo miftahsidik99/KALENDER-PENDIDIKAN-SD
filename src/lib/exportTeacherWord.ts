@@ -18,15 +18,21 @@ export const exportTeacherWord = async (
   const width = 11906;
   const height = paperSize === 'A4' ? 16838 : 18709;
 
-  // Helper functions
+  // Improved helper for holiday detection
   const getHolidayForDate = (date: Date) => {
+    // 1. Get holidays (teacher report might also need grade-specific ones if passed, but currently it's just 'holidays')
+    // We'll keep it simple for now as 'holidays' is already passed as the class-specific one for teachers in the app logic
     return holidays.find(h => {
       const start = parseISO(h.date);
+      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const startOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      
       if (h.endDate) {
         const end = parseISO(h.endDate);
-        return isWithinInterval(date, { start, end });
+        const endOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        return dateOnly >= startOnly && dateOnly <= endOnly;
       }
-      return isSameDay(date, start);
+      return dateOnly.getTime() === startOnly.getTime();
     });
   };
 

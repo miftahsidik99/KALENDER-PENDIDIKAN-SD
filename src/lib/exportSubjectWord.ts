@@ -27,6 +27,14 @@ const toRoman = (num: number) => {
   return roman[num - 1] || num.toString();
 };
 
+const isSubjectMatch = (subjectName: string, targetSubject: string) => {
+  const s = subjectName.toUpperCase();
+  const t = targetSubject.toUpperCase();
+  if (s.includes(t)) return true;
+  if (t === 'PAIBP' && (s.includes('PAI') || s.includes('AGAMA') || s.includes('PENDIDIKAN AGAMA'))) return true;
+  return false;
+};
+
 export const exportSubjectWord = async (
   subject: string,
   identity: SchoolIdentity,
@@ -34,23 +42,32 @@ export const exportSubjectWord = async (
   holidays: Holiday[],
   schoolDays: 5 | 6,
   schedules: Record<number, ScheduleItem[]>,
+  classHolidays: Record<number, Holiday[]>,
   paperSize: 'A4' | 'F4'
 ) => {
   const width = 11906;
   const height = paperSize === 'A4' ? 16838 : 18709;
 
-  const getHolidayForDate = (date: Date) => {
-    return holidays.find(h => {
+  const getHolidayForDate = (date: Date, grade?: number) => {
+    // 1. Get class-specific holidays, or fallback to global holidays
+    const activeHolidays = (grade !== undefined && classHolidays[grade] && classHolidays[grade].length > 0) ? classHolidays[grade] : holidays;
+    
+    return activeHolidays.find(h => {
       const start = parseISO(h.date);
+      // Ensure date is compared correctly with start/end regardless of time
+      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const startOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      
       if (h.endDate) {
         const end = parseISO(h.endDate);
-        return isWithinInterval(date, { start, end });
+        const endOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        return dateOnly >= startOnly && dateOnly <= endOnly;
       }
-      return isSameDay(date, start);
+      return dateOnly.getTime() === startOnly.getTime();
     });
   };
 
-  const isHoliday = (date: Date) => !!getHolidayForDate(date);
+  const isHoliday = (date: Date, grade?: number) => !!getHolidayForDate(date, grade);
 
   // === VISUAL CALENDAR FUNCTIONS ===
   const createMonthTable = (monthDate: Date) => {
@@ -196,7 +213,7 @@ export const exportSubjectWord = async (
           const key = dayKeys[dayNum];
           const subjectName = item[key]?.toString().trim() || '';
           if (subjectName && subjectName !== '-' && subjectName.toUpperCase() !== 'ISTIRAHAT') {
-            if (subjectName.toUpperCase().includes(subject.toUpperCase())) {
+            if (isSubjectMatch(subjectName, subject)) {
               hoursPerWeek++;
               const existing = daysMap.get(dayNum) || [];
               const slotNum = parseInt(item.id);
@@ -238,7 +255,7 @@ export const exportSubjectWord = async (
         let count = 0;
         days.forEach(day => {
           const dayOfWeek = getDay(day);
-          if (daysTaught.includes(dayOfWeek) && !isHoliday(day)) {
+          if (daysTaught.includes(dayOfWeek) && !isHoliday(day, grade)) {
             count++;
           }
         });
@@ -268,7 +285,7 @@ export const exportSubjectWord = async (
           const end = endOfMonth(monthDate);
           const days = eachDayOfInterval({ start, end });
           days.forEach(d => {
-            if (getDay(d) === day && !isHoliday(d)) {
+            if (getDay(d) === day && !isHoliday(d, grade)) {
               hbeForDay++;
             }
           });
