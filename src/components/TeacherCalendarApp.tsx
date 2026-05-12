@@ -268,28 +268,6 @@ export function TeacherCalendarApp({ grade, onBack, initialStartYear }: TeacherC
               </div>
 
               <CalendarView startYear={startYear} holidays={holidays} schoolDays={schoolDays} onChangeHolidays={setHolidays} />
-
-              {/* Legend / Keterangan */}
-              <div className="mt-12 border-t border-gray-100 pt-8 print:break-inside-avoid">
-                <div className="flex items-center gap-2 mb-6">
-                  <FileText size={20} className="text-gray-400" />
-                  <h3 className="text-lg font-semibold text-gray-800">Keterangan Hari Libur & Agenda</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {holidays.map(holiday => (
-                    <div key={holiday.id} className="flex items-start gap-3">
-                      <div className="w-4 h-4 rounded-sm mt-1 shrink-0 print:border print:border-gray-300" style={{ backgroundColor: holiday.color }} />
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">{holiday.description}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(holiday.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}
-                          {holiday.endDate && ` - ${new Date(holiday.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}`}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </motion.div>
 
             {/* Page Break for Print */}

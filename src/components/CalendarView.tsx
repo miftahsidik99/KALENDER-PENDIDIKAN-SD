@@ -78,49 +78,91 @@ export function CalendarView({ startYear, holidays, schoolDays = 6, onChangeHoli
 
     const daysInInterval = eachDayOfInterval({ start: startDate, end: endDate });
 
+    // Find holidays for this month
+    const monthHolidays = holidays.filter(h => {
+      const start = parseISO(h.date);
+      const end = h.endDate ? parseISO(h.endDate) : start;
+      const startOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const endOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      const mStart = new Date(monthStart.getFullYear(), monthStart.getMonth(), monthStart.getDate());
+      const mEnd = new Date(monthEnd.getFullYear(), monthEnd.getMonth(), monthEnd.getDate());
+      return startOnly <= mEnd && endOnly >= mStart;
+    }).sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+
     return (
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+        className="flex flex-col"
       >
-        <div className="bg-blue-600 text-white text-center py-2 font-semibold text-sm">
-          {format(monthStart, 'MMMM yyyy', { locale: id })}
-        </div>
-        <div className="grid grid-cols-7 text-center text-xs font-medium bg-gray-50 border-b border-gray-100">
-          {['Mg', 'Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb'].map((d, i) => (
-            <div key={i} className={cn("py-2", i === 0 ? "text-red-500" : "text-gray-600")}>
-              {d}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 text-center text-sm">
-          {daysInInterval.map((currentDay, i) => {
-            const isCurrentMonth = isSameMonth(currentDay, monthStart);
-            const isSunday = currentDay.getDay() === 0;
-            const isSaturdayDay = currentDay.getDay() === 6;
-            const isNonEffective = isSunday || (schoolDays === 5 && isSaturdayDay);
-            const holiday = getHolidayForDate(currentDay);
-            
-            return (
-              <div 
-                key={i} 
-                onClick={() => isCurrentMonth && handleDayClick(currentDay, holiday)}
-                className={cn(
-                  "py-2 border-b border-r border-gray-50 relative min-h-[40px] flex items-center justify-center transition-colors",
-                  !isCurrentMonth && "text-gray-300 bg-gray-50/50",
-                  isCurrentMonth && isNonEffective && !holiday && "text-red-500",
-                  isCurrentMonth && !isNonEffective && !holiday && "text-gray-700",
-                  isCurrentMonth && !!onChangeHolidays && "cursor-pointer hover:bg-gray-100"
-                )}
-                style={isCurrentMonth && holiday ? { backgroundColor: holiday.color, color: '#fff', fontWeight: 'bold' } : {}}
-                title={holiday?.description || (isCurrentMonth && !!onChangeHolidays ? "Klik untuk edit" : undefined)}
-              >
-                {format(currentDay, dateFormat)}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3">
+          <div className="bg-blue-600 text-white text-center py-2 font-semibold text-sm">
+            {format(monthStart, 'MMMM yyyy', { locale: id })}
+          </div>
+          <div className="grid grid-cols-7 text-center text-xs font-medium bg-gray-50 border-b border-gray-100">
+            {['Mg', 'Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb'].map((d, i) => (
+              <div key={i} className={cn("py-2", i === 0 ? "text-red-500" : "text-gray-600")}>
+                {d}
               </div>
-            );
-          })}
+            ))}
+          </div>
+          <div className="grid grid-cols-7 text-center text-sm">
+            {daysInInterval.map((currentDay, i) => {
+              const isCurrentMonth = isSameMonth(currentDay, monthStart);
+              const isSunday = currentDay.getDay() === 0;
+              const isSaturdayDay = currentDay.getDay() === 6;
+              const isNonEffective = isSunday || (schoolDays === 5 && isSaturdayDay);
+              const holiday = getHolidayForDate(currentDay);
+              
+              return (
+                <div 
+                  key={i} 
+                  onClick={() => isCurrentMonth && handleDayClick(currentDay, holiday)}
+                  className={cn(
+                    "py-2 border-b border-r border-gray-50 relative min-h-[40px] flex items-center justify-center transition-colors",
+                    !isCurrentMonth && "text-gray-300 bg-gray-50/50",
+                    isCurrentMonth && isNonEffective && !holiday && "text-red-500",
+                    isCurrentMonth && !isNonEffective && !holiday && "text-gray-700",
+                    isCurrentMonth && !!onChangeHolidays && "cursor-pointer hover:bg-gray-100"
+                  )}
+                  style={isCurrentMonth && holiday ? { backgroundColor: holiday.color, color: '#fff', fontWeight: 'bold' } : {}}
+                  title={holiday?.description || (isCurrentMonth && !!onChangeHolidays ? "Klik untuk edit" : undefined)}
+                >
+                  {format(currentDay, dateFormat)}
+                </div>
+              );
+            })}
+          </div>
         </div>
+        
+        {monthHolidays.length > 0 && (
+          <div className="text-xs text-gray-700 space-y-1 px-1">
+            {monthHolidays.map((h, idx) => {
+              const isMultiDay = h.endDate && h.endDate !== h.date;
+              let dateStr = "";
+              const hStart = parseISO(h.date);
+              
+              if (isMultiDay) {
+                const hEnd = parseISO(h.endDate as string);
+                if (hStart.getMonth() === hEnd.getMonth()) {
+                  dateStr = `${format(hStart, 'd')}-${format(hEnd, 'd')} ${format(hStart, 'MMM', { locale: id })}`;
+                } else {
+                  dateStr = `${format(hStart, 'd')} ${format(hStart, 'MMM', { locale: id })} - ${format(hEnd, 'd')} ${format(hEnd, 'MMM', { locale: id })}`;
+                }
+              } else {
+                dateStr = `${format(hStart, 'd MMM yyyy', { locale: id })}`;
+              }
+
+              return (
+                <div key={h.id} className="flex">
+                  <span className="font-semibold mr-1">{idx + 1}.</span>
+                  <span className="font-semibold mr-1">{dateStr}:</span>
+                  <span>{h.description}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
     );
   };
