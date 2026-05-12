@@ -1,6 +1,6 @@
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, PageOrientation, VerticalAlign, PageBreak, HeightRule } from 'docx';
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, PageOrientation, VerticalAlign, PageBreak, HeightRule, ImageRun } from 'docx';
 import { saveAs } from 'file-saver';
-import { SchoolIdentity, Holiday, ScheduleItem } from '../types';
+import { SchoolIdentity, SubjectTeacherIdentity, Holiday, ScheduleItem } from '../types';
 import { startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, isWithinInterval, format, getDay, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { id } from 'date-fns/locale';
 
@@ -35,9 +35,29 @@ const isSubjectMatch = (subjectName: string, targetSubject: string) => {
   return false;
 };
 
+function createSignatureRun(base64Data: string | undefined, width: number = 100, height: number = 60, fallbackText: string = "..................................."): Paragraph[] {
+  if (!base64Data) return [new Paragraph({ text: fallbackText, alignment: AlignmentType.CENTER, bold: true, spacing: { before: 800 } })];
+  try {
+    const data = base64Data.split(',')[1] || base64Data;
+    return [new Paragraph({
+      children: [
+        new ImageRun({
+          data: Uint8Array.from(atob(data), c => c.charCodeAt(0)),
+          transformation: { width, height }
+        })
+      ],
+      alignment: AlignmentType.CENTER
+    })];
+  } catch (error) {
+    console.warn("Failed to create signature ImageRun", error);
+    return [new Paragraph({ text: fallbackText, alignment: AlignmentType.CENTER, bold: true, spacing: { before: 800 } })];
+  }
+}
+
 export const exportSubjectWord = async (
   subject: string,
   identity: SchoolIdentity,
+  subjectIdentity: SubjectTeacherIdentity,
   startYear: number,
   holidays: Holiday[],
   schoolDays: 5 | 6,
@@ -493,16 +513,23 @@ export const exportSubjectWord = async (
       children: [
         new Paragraph({
           children: [
-            new TextRun({ text: `KALENDER PENDIDIKAN TAHUN PELAJARAN ${startYear}/${startYear + 1}`, bold: true, size: 32 })
+            new TextRun({ text: `Kalender Akademik Guru Mata Pelajaran ${subject} ${identity.name}`, bold: true, size: 28 })
           ],
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.LEFT,
           spacing: { after: 100 }
         }),
         new Paragraph({
           children: [
-            new TextRun({ text: identity.name.toUpperCase(), bold: true, size: 28 })
+            new TextRun({ text: `Tahun Pelajaran ${startYear}-${startYear + 1}`, bold: true, size: 24 })
           ],
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.LEFT,
+          spacing: { after: 100 }
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: `Nama Guru : ${subjectIdentity.name}`, size: 24 })
+          ],
+          alignment: AlignmentType.LEFT,
           spacing: { after: 400 }
         }),
         
@@ -566,7 +593,9 @@ export const exportSubjectWord = async (
                 new TableCell({
                   children: [
                     new Paragraph({ text: "Mengetahui,", alignment: AlignmentType.CENTER }),
-                    new Paragraph({ text: "Kepala Sekolah", alignment: AlignmentType.CENTER, spacing: { after: 1200 } }),
+                    new Paragraph({ text: "Kepala Sekolah", alignment: AlignmentType.CENTER }),
+                    ...(identity.schoolStamp ? createSignatureRun(identity.schoolStamp, 80, 80) : []),
+                    ...createSignatureRun(identity.principalSignature, 120, 60),
                     new Paragraph({ text: identity.principalName, alignment: AlignmentType.CENTER, bold: true }),
                     new Paragraph({ text: `NIP. ${identity.principalNip || '-'}`, alignment: AlignmentType.CENTER })
                   ],
@@ -575,9 +604,10 @@ export const exportSubjectWord = async (
                 new TableCell({
                   children: [
                     new Paragraph({ text: `${identity.city || '...........................................'}, 15 Juli ${startYear}`, alignment: AlignmentType.CENTER }),
-                    new Paragraph({ text: `Guru ${subject}`, alignment: AlignmentType.CENTER, spacing: { after: 1200 } }),
-                    new Paragraph({ text: "...................................", alignment: AlignmentType.CENTER, bold: true }),
-                    new Paragraph({ text: "NIP. ..............................", alignment: AlignmentType.CENTER })
+                    new Paragraph({ text: `Guru Mata Pelajaran ${subject}`, alignment: AlignmentType.CENTER }),
+                    ...createSignatureRun(subjectIdentity.teacherSignature, 120, 60),
+                    new Paragraph({ text: subjectIdentity.name || "...................................", alignment: AlignmentType.CENTER, bold: true }),
+                    new Paragraph({ text: `NIP. ${subjectIdentity.nip || '..............................'}`, alignment: AlignmentType.CENTER })
                   ],
                   width: { size: 50, type: WidthType.PERCENTAGE }
                 })

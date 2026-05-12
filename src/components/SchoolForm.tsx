@@ -1,5 +1,6 @@
 import React from 'react';
 import { SchoolIdentity } from '../types';
+import { ImageUpload } from './ImageUpload';
 
 interface SchoolFormProps {
   identity: SchoolIdentity;
@@ -10,6 +11,10 @@ export function SchoolForm({ identity, onChange }: SchoolFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onChange({ ...identity, [name]: value });
+  };
+
+  const handleImageChange = (field: 'principalSignature' | 'schoolStamp', value: string | undefined) => {
+    onChange({ ...identity, [field]: value });
   };
 
   return (
@@ -82,6 +87,20 @@ export function SchoolForm({ identity, onChange }: SchoolFormProps) {
             placeholder="Contoh: Kota Bandung"
           />
         </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100">
+        <ImageUpload 
+           label="Tanda Tangan Kepala Sekolah"
+           value={identity.principalSignature}
+           onChange={(val) => handleImageChange('principalSignature', val)}
+           onRemove={() => handleImageChange('principalSignature', undefined)}
+        />
+        <ImageUpload 
+           label="Stempel Sekolah"
+           value={identity.schoolStamp}
+           onChange={(val) => handleImageChange('schoolStamp', val)}
+           onRemove={() => handleImageChange('schoolStamp', undefined)}
+        />
       </div>
     </div>
   );

@@ -1,12 +1,32 @@
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak, VerticalAlign } from 'docx';
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak, VerticalAlign, ImageRun } from 'docx';
 import { saveAs } from 'file-saver';
-import { TeacherIdentity, Holiday, ScheduleItem, CurriculumSubject } from '../types';
+import { TeacherIdentity, SchoolIdentity, Holiday, ScheduleItem, CurriculumSubject } from '../types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, format, isWithinInterval, parseISO, isSameDay, getDay } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { calculateHBEPerDay } from './calendarUtils';
 
+function createSignatureRun(base64Data: string | undefined, width: number = 100, height: number = 60, fallbackText: string = "..................................."): Paragraph[] {
+  if (!base64Data) return [new Paragraph({ text: fallbackText, alignment: AlignmentType.CENTER, bold: true, spacing: { before: 800 } })];
+  try {
+    const data = base64Data.split(',')[1] || base64Data;
+    return [new Paragraph({
+      children: [
+        new ImageRun({
+          data: Uint8Array.from(atob(data), c => c.charCodeAt(0)),
+          transformation: { width, height }
+        })
+      ],
+      alignment: AlignmentType.CENTER
+    })];
+  } catch (error) {
+    console.warn("Failed to create signature ImageRun", error);
+    return [new Paragraph({ text: fallbackText, alignment: AlignmentType.CENTER, bold: true, spacing: { before: 800 } })];
+  }
+}
+
 export const exportTeacherWord = async (
   identity: TeacherIdentity,
+  schoolIdentity: SchoolIdentity,
   startYear: number,
   holidays: Holiday[],
   grade: number,
@@ -450,7 +470,9 @@ export const exportTeacherWord = async (
             new TableCell({
               children: [
                 new Paragraph({ text: "Mengetahui,", alignment: AlignmentType.CENTER }),
-                new Paragraph({ text: "Kepala Sekolah", alignment: AlignmentType.CENTER, spacing: { after: 1200 } }),
+                new Paragraph({ text: "Kepala Sekolah", alignment: AlignmentType.CENTER }),
+                ...(schoolIdentity.schoolStamp ? createSignatureRun(schoolIdentity.schoolStamp, 80, 80) : []),
+                ...createSignatureRun(schoolIdentity.principalSignature, 120, 60),
                 new Paragraph({ text: identity.principalName, alignment: AlignmentType.CENTER, bold: true }),
                 new Paragraph({ text: `NIP. ${identity.principalNip || '-'}`, alignment: AlignmentType.CENTER })
               ],
@@ -459,7 +481,8 @@ export const exportTeacherWord = async (
             new TableCell({
               children: [
                 new Paragraph({ text: `${identity.city}, 15 Juli ${startYear}`, alignment: AlignmentType.CENTER }),
-                new Paragraph({ text: `Guru Kelas ${grade}`, alignment: AlignmentType.CENTER, spacing: { after: 1200 } }),
+                new Paragraph({ text: `Guru Kelas ${grade}`, alignment: AlignmentType.CENTER }),
+                ...createSignatureRun(identity.teacherSignature, 120, 60),
                 new Paragraph({ text: identity.name, alignment: AlignmentType.CENTER, bold: true }),
                 new Paragraph({ text: `NIP. ${identity.nip || '-'}`, alignment: AlignmentType.CENTER })
               ],
@@ -494,18 +517,18 @@ export const exportTeacherWord = async (
       children: [
         // Title
         new Paragraph({
-          children: [new TextRun({ text: "ADMINISTRASI GURU KELAS", bold: true, size: 32 })],
-          alignment: AlignmentType.CENTER,
+          children: [new TextRun({ text: `Kalender Akademik ${identity.schoolName} Kelas ${identity.className}`, bold: true, size: 28 })],
+          alignment: AlignmentType.LEFT,
           spacing: { after: 100 }
         }),
         new Paragraph({
-          children: [new TextRun({ text: identity.schoolName.toUpperCase(), bold: true, size: 28 })],
-          alignment: AlignmentType.CENTER,
+          children: [new TextRun({ text: `Tahun Pelajaran ${startYear}-${startYear + 1}`, bold: true, size: 24 })],
+          alignment: AlignmentType.LEFT,
           spacing: { after: 100 }
         }),
         new Paragraph({
-          children: [new TextRun({ text: `Tahun Pelajaran ${startYear}/${startYear + 1}`, size: 24 })],
-          alignment: AlignmentType.CENTER,
+          children: [new TextRun({ text: `Nama Guru : ${identity.name}`, size: 24 })],
+          alignment: AlignmentType.LEFT,
           spacing: { after: 400 }
         }),
 

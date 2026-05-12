@@ -13,9 +13,10 @@ import { exportTeacherWord } from '../lib/exportTeacherWord';
 import { Download, Calendar as CalendarIcon, Settings, FileText, ArrowLeft, Save, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { AuthButton } from './AuthButton';
-import { useClassCalendarData } from '../lib/useCalendarData';
+import { useClassCalendarData, useSchoolCalendarData } from '../lib/useCalendarData';
 import { db, auth } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { WebSignatureBox } from './WebSignatureBox';
 
 interface TeacherCalendarAppProps {
   grade: number;
@@ -43,10 +44,12 @@ export function TeacherCalendarApp({ grade, onBack, initialStartYear }: TeacherC
     saveClassData, syncWithSchoolCalendar, isSaving, isLoading
   } = useClassCalendarData(startYear, grade);
 
+  const { identity: schoolIdentity } = useSchoolCalendarData(startYear);
+
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      await exportTeacherWord(identity, startYear, holidays, grade, schedule, curriculum, schoolDays, paperSize);
+      await exportTeacherWord(identity, schoolIdentity, startYear, holidays, grade, schedule, curriculum, schoolDays, paperSize);
     } catch (error) {
       console.error("Export failed:", error);
       alert("Terjadi kesalahan saat mengekspor dokumen.");
@@ -328,6 +331,21 @@ export function TeacherCalendarApp({ grade, onBack, initialStartYear }: TeacherC
                 grade={grade} 
                 identity={identity} 
                 schoolDays={schoolDays}
+              />
+            </motion.div>
+
+            {/* Web Signature Box */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 print:shadow-none print:border-none print:p-0"
+            >
+              <WebSignatureBox 
+                schoolIdentity={schoolIdentity}
+                teacherIdentity={identity}
+                grade={grade}
+                startYear={startYear}
               />
             </motion.div>
 

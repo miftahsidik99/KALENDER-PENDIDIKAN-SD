@@ -13,6 +13,7 @@ import { auth } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 import { SubjectCalendarApp } from './components/SubjectCalendarApp';
+import { WebSignatureBox } from './components/WebSignatureBox';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -235,6 +236,11 @@ export default function App() {
                   ))}
                 </div>
               </div>
+              
+              <WebSignatureBox 
+                schoolIdentity={identity} 
+                startYear={startYear}
+              />
             </motion.div>
           </div>
           

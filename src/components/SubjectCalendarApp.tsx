@@ -5,9 +5,11 @@ import { CalendarView } from './CalendarView';
 import { SubjectEffectiveDaysAnalysis } from './SubjectEffectiveDaysAnalysis';
 import { useSchoolCalendarData } from '../lib/useCalendarData';
 import { db, auth } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { ScheduleItem } from '../types';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ScheduleItem, Holiday, SubjectTeacherIdentity } from '../types';
 import { exportSubjectWord } from '../lib/exportSubjectWord';
+import { SubjectTeacherForm } from './SubjectTeacherForm';
+import { WebSignatureBox } from './WebSignatureBox';
 
 interface SubjectCalendarAppProps {
   subject: string;
@@ -22,6 +24,8 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [paperSize, setPaperSize] = useState<'A4' | 'F4'>('A4');
+  const [subjectIdentity, setSubjectIdentity] = useState<SubjectTeacherIdentity>({ name: 'Nama Guru', nip: '' });
+  const [isSavingIdentity, setIsSavingIdentity] = useState(false);
 
   // We use the school calendar data as the reference for holidays and school days
   const {
@@ -30,6 +34,36 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
     holidays, setHolidays,
     saveSchoolData, isSaving
   } = useSchoolCalendarData(startYear);
+
+  useEffect(() => {
+    async function loadSubjectData() {
+      if (!auth.currentUser) return;
+      try {
+        const docRef = doc(db, `users/${auth.currentUser.uid}/subjectSettings/${startYear}_${subject}`);
+        const snap = await getDoc(docRef);
+        if (snap.exists() && snap.data().identity) {
+          setSubjectIdentity(snap.data().identity);
+        }
+      } catch (err) {
+        console.error("Failed to load subject identity", err);
+      }
+    }
+    loadSubjectData();
+  }, [startYear, subject]);
+
+  const saveSubjectIdentity = async (newIdentity: SubjectTeacherIdentity) => {
+    setSubjectIdentity(newIdentity);
+    if (!auth.currentUser) return;
+    setIsSavingIdentity(true);
+    try {
+      const docRef = doc(db, `users/${auth.currentUser.uid}/subjectSettings/${startYear}_${subject}`);
+      await setDoc(docRef, { identity: newIdentity }, { merge: true });
+    } catch (err) {
+      console.error("Failed to save subject identity", err);
+    } finally {
+      setIsSavingIdentity(false);
+    }
+  };
 
   useEffect(() => {
     async function loadAllClassSchedules() {
@@ -67,7 +101,7 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      await exportSubjectWord(subject, identity, startYear, holidays, schoolDays, schedules, classHolidays, paperSize);
+      await exportSubjectWord(subject, identity, subjectIdentity, startYear, holidays, schoolDays, schedules, classHolidays, paperSize);
     } catch (error) {
       console.error("Export failed:", error);
       alert("Terjadi kesalahan saat mengekspor dokumen.");
@@ -166,14 +200,37 @@ export function SubjectCalendarApp({ subject, onBack, initialStartYear }: Subjec
                 <span className="ml-3 text-gray-500">Memuat data jadwal kelas...</span>
               </div>
             ) : (
-              <SubjectEffectiveDaysAnalysis 
-                subject={subject}
-                startYear={startYear}
-                schoolHolidays={holidays}
-                classHolidays={classHolidays}
-                schoolDays={schoolDays}
-                schedules={schedules}
-              />
+              <div className="space-y-8">
+                <div className="print:hidden">
+                  <SubjectTeacherForm 
+                    identity={subjectIdentity} 
+                    onChange={saveSubjectIdentity} 
+                    subject={subject} 
+                  />
+                </div>
+                <SubjectEffectiveDaysAnalysis 
+                  subject={subject}
+                  startYear={startYear}
+                  schoolHolidays={holidays}
+                  classHolidays={classHolidays}
+                  schoolDays={schoolDays}
+                  schedules={schedules}
+                />
+                
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 print:shadow-none print:border-none print:p-0"
+                >
+                  <WebSignatureBox 
+                    schoolIdentity={identity}
+                    subjectIdentity={subjectIdentity}
+                    subject={subject}
+                    startYear={startYear}
+                  />
+                </motion.div>
+              </div>
             )}
           </motion.div>
         </div>

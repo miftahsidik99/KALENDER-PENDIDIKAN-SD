@@ -5,6 +5,8 @@ export interface SchoolIdentity {
   principalName: string;
   principalNip: string;
   city: string;
+  principalSignature?: string;
+  schoolStamp?: string;
 }
 
 export interface TeacherIdentity {
@@ -15,6 +17,13 @@ export interface TeacherIdentity {
   city: string;
   principalName: string;
   principalNip: string;
+  teacherSignature?: string;
+}
+
+export interface SubjectTeacherIdentity {
+  name: string;
+  nip: string;
+  teacherSignature?: string;
 }
 
 export interface ScheduleItem {
