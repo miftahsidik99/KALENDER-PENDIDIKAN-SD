@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { SchoolIdentity, TeacherIdentity, Holiday, ScheduleItem, CurriculumSubject } from '../types';
-import { getDefaultHolidays, defaultCurriculum, defaultScheduleItems } from './defaultData';
+import { getDefaultHolidays, getDefaultCurriculum, defaultScheduleItems } from './defaultData';
 import { getRecommendedSchedule } from './scheduleGenerator';
 
 export function useSchoolCalendarData(startYear: number) {
@@ -91,12 +91,22 @@ export function useSchoolCalendarData(startYear: number) {
         const classRef = doc(db, `users/${auth.currentUser.uid}/classSettings/${startYear}_${i}`);
         const classSnap = await getDoc(classRef);
         
-        let classCurriculum = defaultCurriculum;
+        let classCurriculum = getDefaultCurriculum(i);
         let existingData: any = {};
         if (classSnap.exists()) {
           existingData = classSnap.data();
           if (existingData.curriculum && Array.isArray(existingData.curriculum)) {
-             classCurriculum = existingData.curriculum;
+             const existingCurriculum = existingData.curriculum as CurriculumSubject[];
+             const mergedCurriculum = classCurriculum.map(defaultSub => {
+               const existingItem = existingCurriculum.find(s => s.id === defaultSub.id);
+               return existingItem ? existingItem : defaultSub;
+             });
+             existingCurriculum.forEach(existingSub => {
+               if (!classCurriculum.find(s => s.id === existingSub.id)) {
+                 mergedCurriculum.push(existingSub);
+               }
+             });
+             classCurriculum = mergedCurriculum;
           }
         }
 
@@ -177,7 +187,7 @@ export function useClassCalendarData(startYear: number, grade: number) {
   });
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [schedule, setSchedule] = useState<ScheduleItem[]>(defaultScheduleItems);
-  const [curriculum, setCurriculum] = useState<CurriculumSubject[]>(defaultCurriculum);
+  const [curriculum, setCurriculum] = useState<CurriculumSubject[]>(getDefaultCurriculum(grade));
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -199,7 +209,22 @@ export function useClassCalendarData(startYear: number, grade: number) {
           setIdentity(data.identity);
           setHolidays(data.holidays);
           setSchedule(data.schedule);
-          setCurriculum(data.curriculum);
+          if (data.curriculum && Array.isArray(data.curriculum)) {
+            const existingCurriculum = data.curriculum as CurriculumSubject[];
+            const defaultCurriculum = getDefaultCurriculum(grade);
+            const mergedCurriculum = defaultCurriculum.map(defaultSub => {
+              const existingItem = existingCurriculum.find(s => s.id === defaultSub.id);
+              return existingItem ? existingItem : defaultSub;
+            });
+            existingCurriculum.forEach(existingSub => {
+              if (!defaultCurriculum.find(s => s.id === existingSub.id)) {
+                mergedCurriculum.push(existingSub);
+              }
+            });
+            setCurriculum(mergedCurriculum);
+          } else {
+            setCurriculum(getDefaultCurriculum(grade));
+          }
         } else {
           // If no class data, inherit from school data
           const schoolDocRef = doc(db, `users/${auth.currentUser.uid}/schoolSettings/${startYear}`);

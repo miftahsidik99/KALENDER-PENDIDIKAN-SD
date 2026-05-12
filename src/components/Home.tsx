@@ -122,20 +122,41 @@ export function Home({ onStart }: HomeProps) {
 
             <div className="mt-8 border-t border-gray-100 pt-6">
               <h4 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wider">Guru Mata Pelajaran</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 <button
                   onClick={() => onStart('subject-paibp')}
-                  className="flex flex-col items-center justify-center p-4 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
+                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
                 >
-                  <BookOpen size={28} className="text-gray-400 group-hover:text-indigo-600 mb-2 transition-colors" />
-                  <span className="font-semibold text-gray-700 group-hover:text-indigo-700">Guru PAIBP</span>
+                  <BookOpen size={24} className="text-gray-400 group-hover:text-indigo-600 mb-2 transition-colors" />
+                  <span className="font-semibold text-sm text-center text-gray-700 group-hover:text-indigo-700">Guru PAIBP</span>
                 </button>
                 <button
                   onClick={() => onStart('subject-pjok')}
-                  className="flex flex-col items-center justify-center p-4 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
+                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
                 >
-                  <BookOpen size={28} className="text-gray-400 group-hover:text-indigo-600 mb-2 transition-colors" />
-                  <span className="font-semibold text-gray-700 group-hover:text-indigo-700">Guru PJOK</span>
+                  <BookOpen size={24} className="text-gray-400 group-hover:text-indigo-600 mb-2 transition-colors" />
+                  <span className="font-semibold text-sm text-center text-gray-700 group-hover:text-indigo-700">Guru PJOK</span>
+                </button>
+                <button
+                  onClick={() => onStart('subject-ipas')}
+                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
+                >
+                  <BookOpen size={24} className="text-gray-400 group-hover:text-indigo-600 mb-2 transition-colors" />
+                  <span className="font-semibold text-sm text-center text-gray-700 group-hover:text-indigo-700">Guru IPAS</span>
+                </button>
+                <button
+                  onClick={() => onStart('subject-bahasa inggris')}
+                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
+                >
+                  <BookOpen size={24} className="text-gray-400 group-hover:text-indigo-600 mb-2 transition-colors" />
+                  <span className="font-semibold text-sm text-center text-gray-700 group-hover:text-indigo-700">Guru B. Inggris</span>
+                </button>
+                <button
+                  onClick={() => onStart('subject-kka')}
+                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
+                >
+                  <BookOpen size={24} className="text-gray-400 group-hover:text-indigo-600 mb-2 transition-colors" />
+                  <span className="font-semibold text-sm text-center text-gray-700 group-hover:text-indigo-700">Guru KKA</span>
                 </button>
               </div>
             </div>

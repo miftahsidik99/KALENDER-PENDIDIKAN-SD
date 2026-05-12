@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TeacherIdentity, Holiday, ScheduleItem, CurriculumSubject } from '../types';
-import { getDefaultHolidays, defaultCurriculum } from '../lib/defaultData';
+import { getDefaultHolidays } from '../lib/defaultData';
 import { TeacherForm } from './TeacherForm';
 import { CalendarView } from './CalendarView';
 import { EffectiveDaysAnalysis } from './EffectiveDaysAnalysis';

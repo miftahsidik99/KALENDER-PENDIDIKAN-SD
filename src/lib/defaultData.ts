@@ -1,24 +1,59 @@
 import { Holiday, CurriculumSubject, ScheduleItem } from "../types";
 
-export const defaultCurriculum: CurriculumSubject[] = [
-  { id: '1', no: '1', name: 'PAIBP', hoursPerWeek: 3 },
-  { id: '2', no: '2', name: 'Pendidikan Pancasila', hoursPerWeek: 4 },
-  { id: '3', no: '3', name: 'Bahasa Indonesia', hoursPerWeek: 7 },
-  { id: '4', no: '4', name: 'Matematika', hoursPerWeek: 4 },
-  { id: '5', no: '5', name: 'PJOK', hoursPerWeek: 3 },
-  { id: '6', no: '6', name: 'Seni Budaya', hoursPerWeek: 3 },
-  { id: '7', no: '7', name: 'Mulok/ Bahasa Sunda', hoursPerWeek: 2 },
-  { id: '8', no: '8', name: 'Kokurikuler (GTKAIH)', hoursPerWeek: '' },
-  { id: '8.1', no: '1.', name: 'Bangun pagi dan tidur cepat', hoursPerWeek: 1, isSubItem: true },
-  { id: '8.2', no: '2.', name: 'Beribadah', hoursPerWeek: 1, isSubItem: true },
-  { id: '8.3', no: '3.', name: 'Berolahraga', hoursPerWeek: 1, isSubItem: true },
-  { id: '8.4', no: '4.', name: 'Makan sehat dan bergizi', hoursPerWeek: 1, isSubItem: true },
-  { id: '8.5', no: '5.', name: 'Gemar Belajar', hoursPerWeek: 1, isSubItem: true },
-  { id: '8.6', no: '6.', name: 'Bermasyarakat', hoursPerWeek: 1, isSubItem: true },
-  { id: '9', no: '9', name: 'Guru Mengaji', hoursPerWeek: 2 },
-  { id: '10', no: '10', name: 'Ekstrakurikuler / Pramuka', hoursPerWeek: 2 },
-  { id: '11', no: '11', name: 'Upacara', hoursPerWeek: 1 },
-];
+export const getDefaultCurriculum = (grade: number): CurriculumSubject[] => {
+  const baseCurriculum: CurriculumSubject[] = [
+    { id: '1', no: '1', name: 'PAIBP', hoursPerWeek: 3 },
+    { id: '2', no: '2', name: 'Pendidikan Pancasila', hoursPerWeek: 4 },
+    { id: '3', no: '3', name: 'Bahasa Indonesia', hoursPerWeek: 7 },
+    { id: '4', no: '4', name: 'Matematika', hoursPerWeek: 4 },
+    { id: '5', no: '5', name: 'PJOK', hoursPerWeek: 3 },
+    { id: '6', no: '6', name: 'Seni Budaya', hoursPerWeek: 3 },
+    { id: '7', no: '7', name: 'Mulok/ Bahasa Sunda', hoursPerWeek: 2 },
+  ];
+
+  let nextNo = 8;
+  const kokoIndex = nextNo++;
+  baseCurriculum.push(
+    { id: '8', no: `${kokoIndex}`, name: 'Kokurikuler (GTKAIH)', hoursPerWeek: '' },
+    { id: '8.1', no: '1.', name: 'Bangun pagi dan tidur cepat', hoursPerWeek: 1, isSubItem: true },
+    { id: '8.2', no: '2.', name: 'Beribadah', hoursPerWeek: 1, isSubItem: true },
+    { id: '8.3', no: '3.', name: 'Berolahraga', hoursPerWeek: 1, isSubItem: true },
+    { id: '8.4', no: '4.', name: 'Makan sehat dan bergizi', hoursPerWeek: 1, isSubItem: true },
+    { id: '8.5', no: '5.', name: 'Gemar Belajar', hoursPerWeek: 1, isSubItem: true },
+    { id: '8.6', no: '6.', name: 'Bermasyarakat', hoursPerWeek: 1, isSubItem: true }
+  );
+
+  const extraSubjects = [];
+  if (grade >= 3 && grade <= 6) {
+    extraSubjects.push({ id: 'ipas', no: `${nextNo++}`, name: 'IPAS', hoursPerWeek: 5 });
+    extraSubjects.push({ id: 'aing', no: `${nextNo++}`, name: 'Bahasa Inggris', hoursPerWeek: 2 });
+  }
+  if (grade >= 5 && grade <= 6) {
+    extraSubjects.push({ id: 'kka', no: `${nextNo++}`, name: 'KKA', hoursPerWeek: 2 });
+  }
+
+  // Insert extra subjects before Guru Mengaji
+  baseCurriculum.splice(7, 0, ...extraSubjects);
+
+  // Re-number items after insertion to maintain ordering visually
+  let runningNo = 1;
+  baseCurriculum.forEach(item => {
+    if (!item.isSubItem) {
+      item.no = `${runningNo++}`;
+    }
+  });
+
+  const remainingNo = runningNo;
+  baseCurriculum.push(
+    { id: '9', no: `${remainingNo}`, name: 'Guru Mengaji', hoursPerWeek: 2 },
+    { id: '10', no: `${remainingNo + 1}`, name: 'Ekstrakurikuler / Pramuka', hoursPerWeek: 2 },
+    { id: '11', no: `${remainingNo + 2}`, name: 'Upacara', hoursPerWeek: 1 }
+  );
+
+  return baseCurriculum;
+};
+
+export const defaultCurriculum: CurriculumSubject[] = getDefaultCurriculum(1);
 
 export const defaultScheduleItems: ScheduleItem[] = [
   { id: '1', time: '07:00 - 07:40', monday: 'Upacara', tuesday: 'Pendidikan Pancasila', wednesday: 'Bahasa Indonesia', thursday: 'Matematika', friday: 'Senam', saturday: 'Pramuka' },
