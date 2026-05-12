@@ -136,7 +136,7 @@ export function CalendarView({ startYear, holidays, schoolDays = 6, onChangeHoli
         </div>
         
         {monthHolidays.length > 0 && (
-          <div className="text-xs text-gray-700 space-y-1 px-1">
+          <div className="text-[11px] text-gray-800 px-2 pb-2">
             {monthHolidays.map((h, idx) => {
               const isMultiDay = h.endDate && h.endDate !== h.date;
               let dateStr = "";
@@ -150,14 +150,16 @@ export function CalendarView({ startYear, holidays, schoolDays = 6, onChangeHoli
                   dateStr = `${format(hStart, 'd')} ${format(hStart, 'MMM', { locale: id })} - ${format(hEnd, 'd')} ${format(hEnd, 'MMM', { locale: id })}`;
                 }
               } else {
-                dateStr = `${format(hStart, 'd MMM yyyy', { locale: id })}`;
+                dateStr = `${format(hStart, 'd MMM', { locale: id })}`;
               }
 
               return (
-                <div key={h.id} className="flex">
-                  <span className="font-semibold mr-1">{idx + 1}.</span>
-                  <span className="font-semibold mr-1">{dateStr}:</span>
-                  <span>{h.description}</span>
+                <div key={h.id} className="flex gap-1 items-start mt-1.5">
+                  <span className="font-bold shrink-0">{idx + 1}.</span>
+                  <div className="flex-1 leading-snug">
+                    <span className="font-bold mr-1">{dateStr}:</span>
+                    <span>{h.description}</span>
+                  </div>
                 </div>
               );
             })}
