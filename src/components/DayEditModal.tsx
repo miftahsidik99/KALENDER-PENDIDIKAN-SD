@@ -20,6 +20,14 @@ export function DayEditModal({ isOpen, onClose, selectedDate, existingHoliday, o
   const [color, setColor] = useState(defaultColors[0]);
   const [endDate, setEndDate] = useState('');
 
+  const colorOptions = [
+    { value: "#ef4444", label: "Merah (Libur Nasional/Umum)" },
+    { value: "#eab308", label: "Kuning (Awal Masuk/Masa Transisi)" },
+    { value: "#22c55e", label: "Hijau (Kegiatan Sekolah/MPLS)" },
+    { value: "#3b82f6", label: "Biru (Ujian/Asesmen)" },
+    { value: "#f97316", label: "Oranye (Pembagian Rapor/Libur Semester)" },
+  ];
+
   useEffect(() => {
     if (existingHoliday) {
       setDescription(existingHoliday.description);
@@ -27,7 +35,7 @@ export function DayEditModal({ isOpen, onClose, selectedDate, existingHoliday, o
       setEndDate(existingHoliday.endDate || '');
     } else {
       setDescription('');
-      setColor(defaultColors[0]);
+      setColor(colorOptions[0].value);
       setEndDate('');
     }
   }, [existingHoliday, isOpen]);
@@ -82,27 +90,29 @@ export function DayEditModal({ isOpen, onClose, selectedDate, existingHoliday, o
           </div>
 
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Tanggal Mulai</p>
-                <p className="font-medium text-gray-900">
-                  {format(selectedDate, 'EEEE, d MMM yyyy', { locale: id })}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Sampai Tanggal (Opsional)</label>
-                <input 
-                  type="date" 
-                  value={endDate}
-                  min={format(selectedDate, 'yyyy-MM-dd')}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Mulai</label>
+              <input 
+                type="date" 
+                value={format(selectedDate, 'yyyy-MM-dd')}
+                disabled
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 outline-none text-gray-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Selesai</label>
+              <input 
+                type="date" 
+                value={endDate}
+                min={format(selectedDate, 'yyyy-MM-dd')}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Keterangan / Nama Libur</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Keterangan</label>
               <input
                 type="text"
                 value={description}
@@ -114,20 +124,18 @@ export function DayEditModal({ isOpen, onClose, selectedDate, existingHoliday, o
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Warna (100 Pilihan)</label>
-              <div className="grid grid-cols-10 gap-1.5 max-h-48 overflow-y-auto p-1 border border-gray-100 rounded-lg bg-gray-50">
-                {defaultColors.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setColor(c)}
-                    className="w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110 focus:outline-none"
-                    style={{ backgroundColor: c, boxShadow: color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none' }}
-                    title={c}
-                  >
-                    {color === c && <Check size={12} className="text-white drop-shadow-md" />}
-                  </button>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Warna / Tipe</label>
+              <select
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                {colorOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
           </div>
 

@@ -118,8 +118,47 @@ export const exportToWord = async (
       const rowCells = [];
       for (let j = 0; j < 3; j++) {
         const monthDate = semesterMonths[i * 3 + j];
+        
+        // Find holidays falling into this month
+        const monthStart = startOfMonth(monthDate);
+        const monthEnd = endOfMonth(monthDate);
+        const monthHolidays = holidays.filter(h => {
+          const start = parseISO(h.date);
+          const end = h.endDate ? parseISO(h.endDate) : start;
+          const startOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+          const endOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+          return startOnly <= monthEnd && endOnly >= monthStart;
+        }).sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+
+        const holidayParagraphs = monthHolidays.map((h, idx) => {
+          const isMultiDday = h.endDate && h.endDate !== h.date;
+          
+          let dateStr = "";
+          const hStart = parseISO(h.date);
+          
+          if (isMultiDday) {
+            const hEnd = parseISO(h.endDate as string);
+            if (hStart.getMonth() === hEnd.getMonth()) {
+               dateStr = `${format(hStart, 'd')}-${format(hEnd, 'd')} ${format(hStart, 'MMM', { locale: id })}`;
+            } else {
+               dateStr = `${format(hStart, 'd')} ${format(hStart, 'MMM', { locale: id })} - ${format(hEnd, 'd')} ${format(hEnd, 'MMM', { locale: id })}`;
+            }
+          } else {
+            dateStr = `${format(hStart, 'd MMM yyyy', { locale: id })}`;
+          }
+
+          return new Paragraph({
+            children: [
+              new TextRun({ text: `${idx + 1}. `, size: 16 }),
+              new TextRun({ text: `${dateStr}: `, size: 16, bold: true }),
+              new TextRun({ text: h.description, size: 16 })
+            ],
+            spacing: { before: 40, after: 0 }
+          });
+        });
+
         rowCells.push(
-          new TableCell({
+           new TableCell({
             children: [
               new Paragraph({
                 text: format(monthDate, 'MMMM yyyy', { locale: id }),
@@ -127,7 +166,9 @@ export const exportToWord = async (
                 heading: HeadingLevel.HEADING_3,
                 spacing: { after: 100 }
               }),
-              createMonthTable(monthDate)
+              createMonthTable(monthDate),
+              new Paragraph({ spacing: { before: 80 } }), // add a bit space
+              ...holidayParagraphs
             ],
             margins: { left: 100, right: 100, top: 100, bottom: 100 },
             borders: {
@@ -204,26 +245,6 @@ export const exportToWord = async (
           spacing: { before: 400, after: 200 }
         }),
         createSemesterLayout(months.slice(6, 12)),
-
-        // Keterangan / Holidays
-        new Paragraph({
-          children: [new TextRun({ text: "KETERANGAN HARI LIBUR / NON-EFEKTIF:", bold: true, size: 20 })],
-          spacing: { before: 400, after: 200 }
-        }),
-        ...holidays.map(h => {
-          const dateStr = h.endDate 
-            ? `${format(parseISO(h.date), 'dd MMM yyyy', { locale: id })} - ${format(parseISO(h.endDate), 'dd MMM yyyy', { locale: id })}`
-            : format(parseISO(h.date), 'dd MMM yyyy', { locale: id });
-            
-          return new Paragraph({
-            children: [
-              new TextRun({ text: "■ ", color: h.color.replace('#', '') }),
-              new TextRun({ text: `${dateStr} : `, bold: true, size: 20 }),
-              new TextRun({ text: h.description, size: 20 })
-            ],
-            spacing: { after: 100 }
-          });
-        }),
 
         // Signatures
         new Paragraph({
